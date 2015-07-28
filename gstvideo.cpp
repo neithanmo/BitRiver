@@ -1,6 +1,8 @@
 #include "gstvideo.h"
 #include "ui_gstvideo.h"
 
+guintptr gstvideo::cam_window_handle;
+
 gstvideo::gstvideo(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::gstvideo)
@@ -33,7 +35,8 @@ gstvideo::gstvideo(QWidget *parent) :
     //WId window = ui->widget->winId();
     ui->widget->setFixedWidth(640);
     ui->widget->setFixedHeight(480);
-    this->src = gst_element_factory_make("videotestsrc", "src");
+    gst_init(NULL, FALSE);
+    this->src = gst_element_factory_make("v4l2src", "src");
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
     this->sink = gst_element_factory_make("ximagesink", "sink");
     this->videobalance = gst_element_factory_make("videobalance", "balance");
@@ -51,17 +54,15 @@ gstvideo::gstvideo(QWidget *parent) :
     }
     gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
     gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
-    if(!gst_element_link_many(this->src, this->conversor1, this->videobalance, this->sink, NULL))
-    {
-        qDebug("error, no se pudo hacer link sobre todos los elementos");
-        return;
-    }
+    gst_element_link_many(this->src, this->conversor1,NULL);
+    gst_element_link_many(this->videobalance, this->sink,NULL);
     window = ui->widget->winId();
-    ui->widget->show();
+    cam_window_handle=window;
+    //ui->widget->show();
 
     //this->bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     //gst_bus_set_sync_handler (this->bus, bus_callback, this, NULL);
-    this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+    this->bus = gst_pipeline_get_bus (GST_PIPELINE (this->pipeline));
     gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
     gst_object_unref (this->bus);
 
@@ -110,6 +111,7 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
     GstVideoOverlay *overlay;
     overlay = GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (message));
     gst_video_overlay_set_window_handle (overlay, cam_window_handle);
+    g_print("solicitando ventana");
 
     gst_message_unref (message);
     return GST_BUS_DROP;
