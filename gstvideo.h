@@ -35,6 +35,7 @@ private slots:
 private:
     Ui::gstvideo *ui;
     WId window;
+    GstCaps *caps;
     GstElement *src;
     GstElement *conversor1;
     GstElement *pipeline;
@@ -43,6 +44,9 @@ private:
     GstBus *bus;
     GMainLoop *loop;
     void configure();
+    static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);
+    static guintptr cam_window_handle;
+
 };
 
 #endif // GSTVIDEO_H
