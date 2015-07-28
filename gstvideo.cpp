@@ -31,6 +31,42 @@ gstvideo::gstvideo(QWidget *parent) :
     QObject::connect(ui->slider4, SIGNAL(valueChanged(int)),
                      ui->progressBar4, SLOT(setValue(int)));
     //WId window = ui->widget->winId();
+    ui->widget->setFixedWidth(640);
+    ui->widget->setFixedHeight(480);
+    this->src = gst_element_factory_make("videotestsrc", "src");
+    this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
+    this->sink = gst_element_factory_make("ximagesink", "sink");
+    this->videobalance = gst_element_factory_make("videobalance", "balance");
+    this->pipeline = gst_pipeline_new("pipeline");
+    this->caps = gst_caps_new_simple("video/x-raw",
+                   "width", G_TYPE_INT, 640,
+                   "height", G_TYPE_INT, 480,
+                    NULL);
+
+    //se crearon todos los elementos ????
+
+    if (!this->src || !this->sink || !this->conversor1 || !this->pipeline || !this->videobalance){
+        qDebug("no se crearon todos los elementos necesarios");
+        return;
+    }
+    gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
+    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
+    if(!gst_element_link_many(this->src, this->conversor1, this->videobalance, this->sink, NULL))
+    {
+        qDebug("error, no se pudo hacer link sobre todos los elementos");
+        return;
+    }
+    window = ui->widget->winId();
+    ui->widget->show();
+
+    //this->bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+    //gst_bus_set_sync_handler (this->bus, bus_callback, this, NULL);
+    this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+    gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
+    gst_object_unref (this->bus);
+
+    //gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (this->sink), window);
+    //gst_element_set_state (this->pipeline, GST_STATE_READY);
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
 
@@ -66,42 +102,60 @@ gstvideo::~gstvideo()
 //    return GST_BUS_DROP;
 //}
 
-
-
-void gstvideo::configure()
+GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 {
-    gst_init(NULL, NULL);
-    loop = g_main_loop_new (NULL, FALSE);
+    if (!gst_is_video_overlay_prepare_window_handle_message (message))
+        return GST_BUS_PASS;
 
-    // Elements
-    this->src = gst_element_factory_make("videotestsrc", "src");
-    this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
-    this->sink = gst_element_factory_make("ximagesink", "sink");
-    this->videobalance = gst_element_factory_make("videobalance", "balance");
-    this->pipeline = gst_pipeline_new("pipeline");
+    GstVideoOverlay *overlay;
+    overlay = GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (message));
+    gst_video_overlay_set_window_handle (overlay, cam_window_handle);
 
-    //se crearon todos los elementos ????
-
-    if (!this->src || !this->sink || !this->conversor1 || !this->pipeline || !this->videobalance){
-        qDebug("no se crearon todos los elementos necesarios");
-        return;
-    }
-    gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
-    if(!gst_element_link_many(this->src, this->conversor1, this->videobalance, this->sink, NULL))
-    {
-        qDebug("error, no se pudo hacer link sobre todos los elementos");
-        return;
-    }
-    window = ui->widget->winId();
-    ui->widget->show();
-
-    //this->bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-    //gst_bus_set_sync_handler (this->bus, bus_callback, this, NULL);
-
-    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (this->sink), window);
-    gst_element_set_state (this->pipeline, GST_STATE_READY);
-
+    gst_message_unref (message);
+    return GST_BUS_DROP;
 }
+
+
+
+//void gstvideo::configure()
+//{
+//    gst_init(NULL, NULL);
+//    loop = g_main_loop_new (NULL, FALSE);
+
+//    // Elements
+//    this->src = gst_element_factory_make("videotestsrc", "src");
+//    this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
+//    this->sink = gst_element_factory_make("ximagesink", "sink");
+//    this->videobalance = gst_element_factory_make("videobalance", "balance");
+//    this->pipeline = gst_pipeline_new("pipeline");
+//    this->caps = gst_caps_new_simple("video/x-raw",
+//                   "width", G_TYPE_INT, 640,
+//                   "height", G_TYPE_INT, 480,
+//                    NULL);
+
+//    //se crearon todos los elementos ????
+
+//    if (!this->src || !this->sink || !this->conversor1 || !this->pipeline || !this->videobalance){
+//        qDebug("no se crearon todos los elementos necesarios");
+//        return;
+//    }
+//    gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
+//    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
+//    if(!gst_element_link_many(this->src, this->conversor1, this->videobalance, this->sink, NULL))
+//    {
+//        qDebug("error, no se pudo hacer link sobre todos los elementos");
+//        return;
+//    }
+//    window = ui->widget->winId();
+//    ui->widget->show();
+
+//    //this->bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
+//    //gst_bus_set_sync_handler (this->bus, bus_callback, this, NULL);
+
+//    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (this->sink), window);
+//    gst_element_set_state (this->pipeline, GST_STATE_READY);
+
+//}
 
 
 void gstvideo::start()
