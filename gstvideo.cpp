@@ -3,6 +3,8 @@
 
 guintptr gstvideo::cam_window_handle;
 
+//constructor, inicializo el gui, conecto los objetos, inicializo gstreamer,
+//creo los elementos de gstreamer
 gstvideo::gstvideo(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::gstvideo)
@@ -52,28 +54,11 @@ gstvideo::gstvideo(QWidget *parent) :
         qDebug("no se crearon todos los elementos necesarios");
         return;
     }
-    gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
-    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
-    gst_element_link_many(this->src, this->conversor1,NULL);
-    gst_element_link_many(this->videobalance, this->sink,NULL);
-    window = ui->widget->winId();
-    cam_window_handle=window;
-    //ui->widget->show();
-
-    //this->bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-    //gst_bus_set_sync_handler (this->bus, bus_callback, this, NULL);
-    this->bus = gst_pipeline_get_bus (GST_PIPELINE (this->pipeline));
-    gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
-    gst_object_unref (this->bus);
-
-    //gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (this->sink), window);
-    //gst_element_set_state (this->pipeline, GST_STATE_READY);
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
-
-
 }
 
+//destructor
 gstvideo::~gstvideo()
 {
     gst_element_set_state(GST_ELEMENT(this->pipeline), GST_STATE_NULL);
@@ -82,27 +67,8 @@ gstvideo::~gstvideo()
 }
 
 
-//static GstBusSyncReply bus_callback (GstBus *bus, GstMessage *message, gpointer user_data)
-//{
-//    if (GST_MESSAGE_TYPE (message) != GST_MESSAGE_ELEMENT)
-//        return GST_BUS_PASS;
-
-//    if (!gst_message_has_name (message, "prepare-window-handle"))
-//        return GST_BUS_PASS;
-
-//    qDebug("Got message of type %s from %s", GST_MESSAGE_TYPE_NAME(message),
-//           GST_ELEMENT_NAME (GST_MESSAGE_SRC (message)));
-//    gstvideo *window = (gstvideo*)user_data;
-//    WId win = window->ui->widget->winId();
-//    if(win != 0)
-//    {
-//        gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (message->src), win);
-//    }
-//    gst_message_unref (message);
-
-//    return GST_BUS_DROP;
-//}
-
+//funcion encargada de sincronizar la solicitud del objeto sink de un widget
+// para presentar la imagen de la camara, y le asigno el creado en QT
 GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gpointer user_data)
 {
     if (!gst_is_video_overlay_prepare_window_handle_message (message))
@@ -118,50 +84,31 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
 }
 
 
+//aqui añado los elementos creados en el constructor a la pipeline de gstreamer
+//luego los conecto
+//obtengo el ID de la ventana creada en qt la cual asignare al ximagesink de gstreamer
+//y aseguro de sincronizar el llamado de la ventana a traves de mensajes en el bus de gstreamer
 
-//void gstvideo::configure()
-//{
-//    gst_init(NULL, NULL);
-//    loop = g_main_loop_new (NULL, FALSE);
+void gstvideo::configure()
+{
 
-//    // Elements
-//    this->src = gst_element_factory_make("videotestsrc", "src");
-//    this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
-//    this->sink = gst_element_factory_make("ximagesink", "sink");
-//    this->videobalance = gst_element_factory_make("videobalance", "balance");
-//    this->pipeline = gst_pipeline_new("pipeline");
-//    this->caps = gst_caps_new_simple("video/x-raw",
-//                   "width", G_TYPE_INT, 640,
-//                   "height", G_TYPE_INT, 480,
-//                    NULL);
+    gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
+    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
+    gst_element_link_many(this->src, this->conversor1,NULL);
+    gst_element_link_many(this->videobalance, this->sink,NULL);
+    window = ui->widget->winId();
+    cam_window_handle=window;
+    this->bus = gst_pipeline_get_bus (GST_PIPELINE (this->pipeline));
+    gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
+    gst_object_unref (this->bus);
 
-//    //se crearon todos los elementos ????
-
-//    if (!this->src || !this->sink || !this->conversor1 || !this->pipeline || !this->videobalance){
-//        qDebug("no se crearon todos los elementos necesarios");
-//        return;
-//    }
-//    gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
-//    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
-//    if(!gst_element_link_many(this->src, this->conversor1, this->videobalance, this->sink, NULL))
-//    {
-//        qDebug("error, no se pudo hacer link sobre todos los elementos");
-//        return;
-//    }
-//    window = ui->widget->winId();
-//    ui->widget->show();
-
-//    //this->bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-//    //gst_bus_set_sync_handler (this->bus, bus_callback, this, NULL);
-
-//    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY (this->sink), window);
-//    gst_element_set_state (this->pipeline, GST_STATE_READY);
-
-//}
+}
 
 
 void gstvideo::start()
 {
+    this->configure();//antes de poper la pipeline a playing state, debo de añadir lo elementos a esta
+    //vigilar el bus, etc etc
     gst_element_set_state (pipeline, GST_STATE_PLAYING);
 }
 
