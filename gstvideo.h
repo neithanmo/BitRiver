@@ -45,6 +45,7 @@ private:
     GMainLoop *loop;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);
     static guintptr cam_window_handle;
+    void configure();
 
 };
 
