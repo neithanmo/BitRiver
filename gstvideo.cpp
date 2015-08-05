@@ -10,22 +10,26 @@ gstvideo::gstvideo(QWidget *parent) :
     ui(new Ui::gstvideo)
 {
     ui->setupUi(this);
-    ui->slider1->setRange(0,100);
-    ui->slider2->setRange(0,100);
-    ui->slider3->setRange(0,100);
-    ui->slider4->setRange(0,100);
+    ui->slider1->setRange(-100,100);//contraste 0 -> 2. default=1
+    ui->slider1->setTickPosition(QSlider::TicksAbove);
+    ui->slider2->setRange(-100,100);//brillo    -1 -> 1. default=0
+    ui->slider2->setTickPosition(QSlider::TicksAbove);
+    ui->slider3->setRange(-100,100);//saturacion 0 -> 2. default=1
+    ui->slider3->setTickPosition(QSlider::TicksAbove);
+    ui->slider4->setRange(-100,100);//hue       -1 -> 1. default=0
+    ui->slider4->setTickPosition(QSlider::TicksAbove);
     ui->slider1->setValue(0);
     ui->slider2->setValue(0);
     ui->slider3->setValue(0);
     ui->slider4->setValue(0);
     ui->progressBar1->setValue(0);
-    ui->progressBar1->setRange(0,100);
+    ui->progressBar1->setRange(-100,100);//muestra el valor actual del contraste
     ui->progressBar2->setValue(0);
-    ui->progressBar2->setRange(0,100);
+    ui->progressBar2->setRange(-100,100);//valor del brillo
     ui->progressBar3->setValue(0);
-    ui->progressBar3->setRange(0,100);
+    ui->progressBar3->setRange(-100,100);//valor de la saturacion
     ui->progressBar4->setValue(0);
-    ui->progressBar4->setRange(0,100);
+    ui->progressBar4->setRange(-100,100);//valor del HUE
     QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
                      ui->progressBar1, SLOT(setValue(int)));
     QObject::connect(ui->slider2, SIGNAL(valueChanged(int)),
@@ -54,6 +58,11 @@ gstvideo::gstvideo(QWidget *parent) :
         qDebug("no se crearon todos los elementos necesarios");
         return;
     }
+
+    connect(ui->slider1, SIGNAL(valueChanged(int)), this, SLOT(contrast(int)));
+    connect(ui->slider2, SIGNAL(valueChanged(int)), this, SLOT(brightness(int)));
+    connect(ui->slider3, SIGNAL(valueChanged(int)), this, SLOT(hue(int)));
+    connect(ui->slider4, SIGNAL(valueChanged(int)), this, SLOT(saturation(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
 }
@@ -104,10 +113,45 @@ void gstvideo::configure()
 
 }
 
+void gstvideo::update_color_channel (gchar *channel_name, gint dvalue, GstColorBalance *cb) {
+  GstColorBalanceChannel *channel = NULL;
+  const GList *channels, *l;
+
+  /* Retrieve the list of channels and locate the requested one */
+  channels = gst_color_balance_list_channels (cb);
+  for (l = channels; l != NULL; l = l->next) {
+    GstColorBalanceChannel *tmp = (GstColorBalanceChannel *)l->data;
+
+    if (g_strrstr (tmp->label, channel_name)) {
+      channel = tmp;
+      break;
+    }
+  }
+  if (!channel)return;
+
+    if (dvalue > channel->max_value)
+    {
+      dvalue = channel->max_value;
+      g_print("%d/n", dvalue);
+    }
+    else {
+        if (dvalue < channel->min_value)
+            dvalue = channel->min_value;
+         }
+   gst_color_balance_set_value(cb, channel, dvalue);
+   g_print("%d\n", dvalue);
+   g_print("%s", "maxValue");
+   g_print("%d\n", channel->max_value);
+   g_print("%s", "minValue");
+   g_print("%d\n", channel->min_value);
+
+}
+
+// ##################################### SLOTS #############################################################################
 
 void gstvideo::start()
 {
-    this->configure();//antes de poper la pipeline a playing state, debo de añadir lo elementos a esta
+    this->configure();//antes de poner la pipeline a playing state, debo de añadir lo elementos a esta
     //vigilar el bus, etc etc
     gst_element_set_state (pipeline, GST_STATE_PLAYING);
 }
@@ -117,5 +161,27 @@ void gstvideo::stop()
     if (this->pipeline != NULL)
     {
         gst_element_set_state (pipeline, GST_STATE_PAUSED);
+        g_object_unref(this->pipeline);
     }
+}
+
+void gstvideo::contrast(int c){
+    //g_print("%d/n", x);
+    c = c*10;
+    this->update_color_channel("CONTRAST", c, GST_COLOR_BALANCE(this->videobalance));
+}
+
+void gstvideo::brightness(int b){
+    b = b*10;
+    this->update_color_channel("BRIGHTNESS", b, GST_COLOR_BALANCE(this->videobalance));
+}
+
+void gstvideo::hue(int h){
+    h = h*10;
+    this->update_color_channel("HUE", h, GST_COLOR_BALANCE(this->videobalance));
+}
+
+void gstvideo::saturation(int s){
+    s = s*10;
+    this->update_color_channel("SATURATION", s, GST_COLOR_BALANCE(this->videobalance));
 }
