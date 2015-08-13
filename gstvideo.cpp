@@ -1,7 +1,15 @@
 #include "gstvideo.h"
 #include "ui_gstvideo.h"
 
+
 guintptr gstvideo::cam_window_handle;
+
+static GstElement *pipeline; //= gst_pipeline_new("pipeline");
+static GstElement *curr ;//= gst_element_factory_make("identity", "curr"); //current efect
+static GstPad *blockpad; //source pad de mi fuente, en este caso v4l2src
+static GstElement *conv_before;// = gst_element_factory_make("videoconvert", "conv_after");
+static GstElement *conv_after;// = gst_element_factory_make("videoconvert", "conv_after");
+static int effect=0;
 
 //constructor, inicializo el gui, conecto los objetos, inicializo gstreamer,
 //creo los elementos de gstreamer
@@ -30,6 +38,10 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->progressBar3->setRange(-100,100);//valor de la saturacion
     ui->progressBar4->setValue(0);
     ui->progressBar4->setRange(-100,100);//valor del HUE
+    ui->comboBox->addItems(QStringList()<<"identity" <<"dicetv"
+                            <<"warptv"<<"shagadelictv"<< "revtv"<< "radioactv"<< "rippletv"<<"TehRoxx0r"<<"Cartoon"<<"invert"
+                           <<"pixeliz0r"<<"Nervous"<<"Vertigo"<<"Color Distance"<<"LetterB0xed"<<"Levels"<<"Baltan"<<"Twolay0r"<<"threelay0r"
+                           <<"bw0r"<<"Sobel"<<"Distort0r");
     QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
                      ui->progressBar1, SLOT(setValue(int)));
     QObject::connect(ui->slider2, SIGNAL(valueChanged(int)),
@@ -46,15 +58,18 @@ gstvideo::gstvideo(QWidget *parent) :
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
     this->sink = gst_element_factory_make("ximagesink", "sink");
     this->videobalance = gst_element_factory_make("videobalance", "balance");
-    this->pipeline = gst_pipeline_new("pipeline");
+    pipeline = gst_pipeline_new("pipeline");
     this->caps = gst_caps_new_simple("video/x-raw",
                    "width", G_TYPE_INT, 640,
                    "height", G_TYPE_INT, 480,
                     NULL);
-
+    blockpad = gst_element_get_static_pad(this->src, "src");
+    conv_after = gst_element_factory_make("videoconvert", "conv_after");
+    conv_before = gst_element_factory_make("videoconvert", "conv_before");
+    curr = gst_element_factory_make("identity", "curr");
     //se crearon todos los elementos ????
 
-    if (!this->src || !this->sink || !this->conversor1 || !this->pipeline || !this->videobalance){
+    if (!this->src || !this->sink || !this->conversor1 || !pipeline || !this->videobalance || !conv_before || !curr || !conv_after){
         qDebug("no se crearon todos los elementos necesarios");
         return;
     }
@@ -70,8 +85,8 @@ gstvideo::gstvideo(QWidget *parent) :
 //destructor
 gstvideo::~gstvideo()
 {
-    gst_element_set_state(GST_ELEMENT(this->pipeline), GST_STATE_NULL);
-    gst_object_unref(this->pipeline);
+    gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
+    gst_object_unref(pipeline);
     delete ui;
 }
 
@@ -101,13 +116,14 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
 void gstvideo::configure()
 {
 
-    gst_bin_add_many(GST_BIN(this->pipeline), this->src, this->conversor1, this->videobalance, this->sink, NULL);
+    gst_bin_add_many(GST_BIN(pipeline), this->src, this->conversor1, this->videobalance, conv_before,
+                     curr, conv_after, this->sink, NULL);
     gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
     gst_element_link_many(this->src, this->conversor1,NULL);
-    gst_element_link_many(this->videobalance, this->sink,NULL);
+    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
     window = ui->widget->winId();
     cam_window_handle=window;
-    this->bus = gst_pipeline_get_bus (GST_PIPELINE (this->pipeline));
+    this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
     gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
     gst_object_unref (this->bus);
 
@@ -139,13 +155,142 @@ void gstvideo::update_color_channel (gchar *channel_name, gint dvalue, GstColorB
             dvalue = channel->min_value;
          }
    gst_color_balance_set_value(cb, channel, dvalue);
-   g_print("%d\n", dvalue);
-   g_print("%s", "maxValue");
-   g_print("%d\n", channel->max_value);
-   g_print("%s", "minValue");
-   g_print("%d\n", channel->min_value);
 
 }
+
+
+
+GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data){
+
+    GstPad *srcpad, *sinkpad;
+    GST_DEBUG_OBJECT(pad, "blocking pad now");
+
+    /*procedo a remover el probe, debido a que instalare un nuevo probe, ademas ya el
+     * blockpad esta bloqueado*/
+
+    gst_pad_remove_probe(pad, GST_PAD_PROBE_INFO_ID(info));
+    /* install new probe for EOS */
+    srcpad = gst_element_get_static_pad (curr, "src");
+    gst_pad_add_probe(srcpad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, (GstPadProbeCallback)event_eos, user_data, NULL);
+    gst_object_unref (srcpad);
+
+    /* push EOS into the element, the probe will be fired when the
+     * EOS leaves the effect and it has thus drained all of its data */
+
+    sinkpad = gst_element_get_static_pad (curr, "sink");
+    gst_pad_send_event (sinkpad, gst_event_new_eos ());
+    gst_object_unref (sinkpad);
+
+    return GST_PAD_PROBE_OK;
+}
+
+
+GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpointer user_data)
+{
+  GstElement *next;
+
+  if (GST_EVENT_TYPE (GST_PAD_PROBE_INFO_DATA (info)) != GST_EVENT_EOS)
+    return GST_PAD_PROBE_OK;
+  gst_pad_remove_probe (pad, GST_PAD_PROBE_INFO_ID (info));
+  switch (effect){
+  case 0:
+      next = gst_element_factory_make("identity", "next");
+      break;
+  case 1:
+      next = gst_element_factory_make("dicetv", "next");
+      break;
+  case 2:
+      next = gst_element_factory_make("warptv", "next");
+      break;
+  case 3:
+      next = gst_element_factory_make("shagadelictv", "next");
+      break;
+  case 4:
+      next = gst_element_factory_make("revtv", "next");
+      break;
+  case 5:
+      next = gst_element_factory_make("radioactv", "next");
+      break;
+  case 6:
+      next = gst_element_factory_make("rippletv", "next");
+      break;
+  case 7:
+      next = gst_element_factory_make("frei0r-filter-tehroxx0r", "next");
+      break;
+  case 8:
+      next = gst_element_factory_make("frei0r-filter-cartoon", "next");
+      break;
+  case 9:
+      next = gst_element_factory_make("frei0r-filter-invert0r", "next");
+      break;
+  case 10:
+      next = gst_element_factory_make("frei0r-filter-pixeliz0r", "next");
+      break;
+  case 11:
+      next = gst_element_factory_make("frei0r-filter-nervous", "next");
+      break;
+  case 12:
+      next = gst_element_factory_make("frei0r-filter-vertigo", "next");
+      break;
+  case 13:
+      next = gst_element_factory_make("frei0r-filter-color-distance", "next");
+      break;
+  case 14:
+      next = gst_element_factory_make("frei0r-filter-letterb0xed", "next");
+      break;
+  case 15:
+      next = gst_element_factory_make("frei0r-filter-levels", "next");
+      break;
+  case 16:
+      next = gst_element_factory_make("frei0r-filter-baltan", "next");
+      break;
+  case 17:
+      next = gst_element_factory_make("frei0r-filter-twolay0r", "next");
+      break;
+  case 18:
+      next = gst_element_factory_make("frei0r-filter-threelay0r", "next");
+      break;
+  case 19:
+      next = gst_element_factory_make("frei0r-filter-bw0r", "next");
+      break;
+  case 20:
+      next = gst_element_factory_make("frei0r-filter-sobel", "next");
+      break;
+  case 21:
+      next = gst_element_factory_make("frei0r-filter-distort0r", "next");
+      break;
+  default:
+      next = gst_element_factory_make("identity", "next");
+      break;
+    }
+
+  if(next==NULL){
+      g_print("%s/n","error, no se puedo crear el elemento");
+  }
+
+  g_print ("Switching from '%s' to '%s'..\n", GST_OBJECT_NAME (curr),
+      GST_OBJECT_NAME (next));
+
+  gst_element_set_state (curr, GST_STATE_NULL);
+
+  /* remove unlinks automatically */
+  GST_DEBUG_OBJECT (pipeline, "removing %" GST_PTR_FORMAT, curr);
+  gst_bin_remove (GST_BIN (pipeline), curr);
+
+  GST_DEBUG_OBJECT (pipeline, "adding   %" GST_PTR_FORMAT, next);
+  gst_bin_add (GST_BIN (pipeline), next);
+
+  GST_DEBUG_OBJECT (pipeline, "linking..");
+  gst_element_link_many (conv_before, next, conv_after, NULL);
+
+  gst_element_set_state (next, GST_STATE_PLAYING);
+
+  curr = next;
+  GST_DEBUG_OBJECT (pipeline, "done");
+
+  return GST_PAD_PROBE_DROP;
+}
+
 
 // ##################################### SLOTS #############################################################################
 
@@ -158,10 +303,10 @@ void gstvideo::start()
 
 void gstvideo::stop()
 {
-    if (this->pipeline != NULL)
+    if (pipeline != NULL)
     {
         gst_element_set_state (pipeline, GST_STATE_PAUSED);
-        g_object_unref(this->pipeline);
+        g_object_unref(pipeline);
     }
 }
 
@@ -184,4 +329,11 @@ void gstvideo::hue(int h){
 void gstvideo::saturation(int s){
     s = s*10;
     this->update_color_channel("SATURATION", s, GST_COLOR_BALANCE(this->videobalance));
+}
+
+
+void gstvideo::on_comboBox_currentIndexChanged(int index)
+{
+    effect=ui->comboBox->currentIndex();
+    gst_pad_add_probe(blockpad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, (GstPadProbeCallback)block_src, this->loop, NULL);
 }
