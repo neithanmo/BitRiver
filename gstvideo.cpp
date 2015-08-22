@@ -1,7 +1,6 @@
 #include "gstvideo.h"
 #include "ui_gstvideo.h"
 
-
 guintptr gstvideo::cam_window_handle;
 
 static GstElement *pipeline; //= gst_pipeline_new("pipeline");
@@ -30,6 +29,9 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->slider2->setValue(0);
     ui->slider3->setValue(0);
     ui->slider4->setValue(0);
+    ui->slider5->setRange(0,10);//control del volumen
+    ui->slider5->setValue(0);
+    ui->slider5->setTickPosition(QSlider::TicksAbove);
     ui->progressBar1->setValue(0);
     ui->progressBar1->setRange(-100,100);//muestra el valor actual del contraste
     ui->progressBar2->setValue(0);
@@ -50,6 +52,7 @@ gstvideo::gstvideo(QWidget *parent) :
                      ui->progressBar3, SLOT(setValue(int)));
     QObject::connect(ui->slider4, SIGNAL(valueChanged(int)),
                      ui->progressBar4, SLOT(setValue(int)));
+
     //WId window = ui->widget->winId();
     ui->widget->setFixedWidth(640);
     ui->widget->setFixedHeight(480);
@@ -74,10 +77,22 @@ gstvideo::gstvideo(QWidget *parent) :
         return;
     }
 
+    gst_bin_add_many(GST_BIN(pipeline), this->src, this->conversor1, this->videobalance, conv_before,
+                     curr, conv_after, this->sink,NULL);
+    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
+    gst_element_link_many(this->src, this->conversor1,NULL);
+    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
+    window = ui->widget->winId();
+    cam_window_handle=window;
+    this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+    gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
+    gst_object_unref (this->bus);
+
     connect(ui->slider1, SIGNAL(valueChanged(int)), this, SLOT(contrast(int)));
     connect(ui->slider2, SIGNAL(valueChanged(int)), this, SLOT(brightness(int)));
     connect(ui->slider3, SIGNAL(valueChanged(int)), this, SLOT(hue(int)));
     connect(ui->slider4, SIGNAL(valueChanged(int)), this, SLOT(saturation(int)));
+    connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(volume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
 }
@@ -112,22 +127,6 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
 //luego los conecto
 //obtengo el ID de la ventana creada en qt la cual asignare al ximagesink de gstreamer
 //y aseguro de sincronizar el llamado de la ventana a traves de mensajes en el bus de gstreamer
-
-void gstvideo::configure()
-{
-
-    gst_bin_add_many(GST_BIN(pipeline), this->src, this->conversor1, this->videobalance, conv_before,
-                     curr, conv_after, this->sink, NULL);
-    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
-    gst_element_link_many(this->src, this->conversor1,NULL);
-    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
-    window = ui->widget->winId();
-    cam_window_handle=window;
-    this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
-    gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
-    gst_object_unref (this->bus);
-
-}
 
 void gstvideo::update_color_channel (gchar *channel_name, gint dvalue, GstColorBalance *cb) {
   GstColorBalanceChannel *channel = NULL;
@@ -268,19 +267,11 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
       g_print("%s/n","error, no se puedo crear el elemento");
   }
 
-  g_print ("Switching from '%s' to '%s'..\n", GST_OBJECT_NAME (curr),
-      GST_OBJECT_NAME (next));
-
   gst_element_set_state (curr, GST_STATE_NULL);
 
   /* remove unlinks automatically */
-  GST_DEBUG_OBJECT (pipeline, "removing %" GST_PTR_FORMAT, curr);
   gst_bin_remove (GST_BIN (pipeline), curr);
-
-  GST_DEBUG_OBJECT (pipeline, "adding   %" GST_PTR_FORMAT, next);
   gst_bin_add (GST_BIN (pipeline), next);
-
-  GST_DEBUG_OBJECT (pipeline, "linking..");
   gst_element_link_many (conv_before, next, conv_after, NULL);
 
   gst_element_set_state (next, GST_STATE_PLAYING);
@@ -296,9 +287,11 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
 
 void gstvideo::start()
 {
-    this->configure();//antes de poner la pipeline a playing state, debo de añadir lo elementos a esta
+    //this->configure();//antes de poner la pipeline a playing state, debo de añadir lo elementos a esta
     //vigilar el bus, etc etc
     gst_element_set_state (pipeline, GST_STATE_PLAYING);
+    audio->start();
+    //gst_element_set_state (bin, GST_STATE_PLAYING);
 }
 
 void gstvideo::stop()
@@ -306,8 +299,9 @@ void gstvideo::stop()
     if (pipeline != NULL)
     {
         gst_element_set_state (pipeline, GST_STATE_PAUSED);
-        g_object_unref(pipeline);
+        //g_object_unref(pipeline);
     }
+    audio->pause();
 }
 
 void gstvideo::contrast(int c){
@@ -336,4 +330,8 @@ void gstvideo::on_comboBox_currentIndexChanged(int index)
 {
     effect=ui->comboBox->currentIndex();
     gst_pad_add_probe(blockpad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, (GstPadProbeCallback)block_src, this->loop, NULL);
+}
+
+void gstvideo::volume(int y){
+    audio->avolume(y);
 }
