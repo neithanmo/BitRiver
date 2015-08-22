@@ -8,11 +8,15 @@
 #include <gst/video/videooverlay.h>
 #include <QMessageBox>
 #include <QSlider>
+#include "gstaudio.h"
+#include <math.h>
 
 
 namespace Ui {
 class gstvideo;
+class gstaudio;
 }
+
 
 class gstvideo : public QWidget
 {
@@ -21,6 +25,7 @@ class gstvideo : public QWidget
 public:
     gstvideo(QWidget *parent = 0);
     ~gstvideo();
+    gstaudio *audio;
 
 private slots:
     void start();
@@ -30,6 +35,7 @@ private slots:
     void hue(int);
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
+    void volume(int);
 
 private:
     Ui::gstvideo *ui;
@@ -43,7 +49,6 @@ private:
     GMainLoop *loop;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);
     static guintptr cam_window_handle;
-    void configure();
     void update_color_channel (gchar*, gint, GstColorBalance*);
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
