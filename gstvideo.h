@@ -45,6 +45,7 @@ private:
     GstElement *conversor1;
     GstElement *videobalance;
     GstElement *sink;
+    GstElement *audiosink;
     GstBus *bus;
     GMainLoop *loop;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);
