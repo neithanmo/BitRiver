@@ -42,7 +42,7 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->progressBar4->setRange(-100,100);//valor del HUE
     ui->comboBox->addItems(QStringList()<<"identity" <<"dicetv"
                             <<"warptv"<<"shagadelictv"<< "revtv"<< "radioactv"<< "rippletv"<<"TehRoxx0r"<<"Cartoon"<<"invert"
-                           <<"pixeliz0r"<<"Nervous"<<"Vertigo"<<"Color Distance"<<"LetterB0xed"<<"Levels"<<"Baltan"<<"Twolay0r"<<"threelay0r"
+                           <<"pixeliz0r"<<"Nervous"<<"Vertigo"<<"Color Distance"<<"perspective"<<"color-B"<<"Baltan"<<"Twolay0r"<<"threelay0r"
                            <<"bw0r"<<"Sobel"<<"Distort0r");
     QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
                      ui->progressBar1, SLOT(setValue(int)));
@@ -61,6 +61,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
     this->sink = gst_element_factory_make("ximagesink", "sink");
     this->videobalance = gst_element_factory_make("videobalance", "balance");
+    this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
     pipeline = gst_pipeline_new("pipeline");
     this->caps = gst_caps_new_simple("video/x-raw",
                    "width", G_TYPE_INT, 640,
@@ -116,7 +117,7 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
     GstVideoOverlay *overlay;
     overlay = GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (message));
     gst_video_overlay_set_window_handle (overlay, cam_window_handle);
-    g_print("solicitando ventana");
+    g_print("solicitando ventana /n");
 
     gst_message_unref (message);
     return GST_BUS_DROP;
@@ -235,10 +236,11 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
       next = gst_element_factory_make("frei0r-filter-color-distance", "next");
       break;
   case 14:
-      next = gst_element_factory_make("frei0r-filter-letterb0xed", "next");
+      next = gst_element_factory_make("frei0r-filter-perspective", "next");
+      g_object_set(next, "top-left-x", 0.8, "top-left-Y", 0.01, "top-right-x",0.01, "top-right-Y",0.03490 ,  NULL);
       break;
   case 15:
-      next = gst_element_factory_make("frei0r-filter-levels", "next");
+      next = gst_element_factory_make("frei0r-filter-b", "next");
       break;
   case 16:
       next = gst_element_factory_make("frei0r-filter-baltan", "next");
@@ -264,7 +266,9 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
     }
 
   if(next==NULL){
-      g_print("%s/n","error, no se puedo crear el elemento");
+      g_print("%s","error, no se puedo crear el elemento /n");
+      g_print("%s","setting default effect: identity /n");
+      next = gst_element_factory_make("identity", "next");
   }
 
   gst_element_set_state (curr, GST_STATE_NULL);
@@ -287,11 +291,9 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
 
 void gstvideo::start()
 {
-    //this->configure();//antes de poner la pipeline a playing state, debo de añadir lo elementos a esta
-    //vigilar el bus, etc etc
+
     gst_element_set_state (pipeline, GST_STATE_PLAYING);
     audio->start();
-    //gst_element_set_state (bin, GST_STATE_PLAYING);
 }
 
 void gstvideo::stop()
