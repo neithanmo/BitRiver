@@ -124,7 +124,7 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
 }
 
 
-//aqui añado los elementos creados en el constructor a la pipeline de gstreamer
+//arriba añado los elementos creados en el constructor a la pipeline de gstreamer
 //luego los conecto
 //obtengo el ID de la ventana creada en qt la cual asignare al ximagesink de gstreamer
 //y aseguro de sincronizar el llamado de la ventana a traves de mensajes en el bus de gstreamer
