@@ -48,14 +48,14 @@ private:
     GstElement *audiosink;
     GstBus *bus;
     GMainLoop *loop;
-    static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);
+    static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
     static guintptr cam_window_handle;
     void update_color_channel (gchar*, gint, GstColorBalance*);
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static gboolean to_block_src(gpointer user_data);
     //int effect;
-    /*st-launch-1.0 v4l2src ! videoconvert ! videobalance ! videoconvert ! agingtv ! videoconvert ! autovideosink*/
+    /*gst-launch-1.0 v4l2src ! videoconvert ! videobalance ! videoconvert ! agingtv ! videoconvert ! autovideosink*/
 
 };
 
