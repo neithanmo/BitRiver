@@ -8,13 +8,13 @@
 #include <gst/video/videooverlay.h>
 #include <QMessageBox>
 #include <QSlider>
-#include "gstaudio.h"
 #include <math.h>
+#include <gst/audio/streamvolume.h>
 
 
 namespace Ui {
 class gstvideo;
-class gstaudio;
+//class gstaudio;
 }
 
 
@@ -25,7 +25,6 @@ class gstvideo : public QWidget
 public:
     gstvideo(QWidget *parent = 0);
     ~gstvideo();
-    gstaudio *audio;
 
 private slots:
     void start();
@@ -35,7 +34,7 @@ private slots:
     void hue(int);
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
-    void volume(int);
+    void avolume(int);
 
 private:
     Ui::gstvideo *ui;
@@ -46,6 +45,10 @@ private:
     GstElement *videobalance;
     GstElement *sink;
     GstElement *audiosink;
+    GstElement *audiosrc;
+    GstElement *conv;
+    GstElement *bin;
+    GstElement *volume;
     GstBus *bus;
     GMainLoop *loop;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
@@ -54,6 +57,7 @@ private:
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static gboolean to_block_src(gpointer user_data);
+    //void avolume(gint);
     //int effect;
     /*gst-launch-1.0 v4l2src ! videoconvert ! videobalance ! videoconvert ! agingtv ! videoconvert ! autovideosink*/
 
