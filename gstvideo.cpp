@@ -117,7 +117,7 @@ gstvideo::gstvideo(QWidget *parent) :
     gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
     if(!gst_element_link_many(this->bin, this->audiosink, NULL)){
         qDebug("No se pudo linkear el bin y audio");              //linking the bin ghostpad to de audiosink
-        return -1;
+        return;
     }
 
     //#############################################################################
