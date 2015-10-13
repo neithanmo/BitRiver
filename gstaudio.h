@@ -8,7 +8,7 @@
 #include <QSlider>
 #include <gst/audio/streamvolume.h>
 
-static GstElement *bin;
+//static GstElement *bin;
 class gstaudio
 {
 public:
@@ -16,7 +16,6 @@ public:
     ~gstaudio();
     GstElement *audiosrc;
     GstElement *conv;
-    //GstElement *volume;
     GstElement *asink;
     void start();
     void pause();
