@@ -61,7 +61,8 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->widget->setFixedHeight(480);
     gst_init(NULL, FALSE);
 
-    //##################### video elements #################################
+    //##################### video elements ###################################
+
     pipeline = gst_pipeline_new("pipeline");
     this->src = gst_element_factory_make("v4l2src", "src");
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
@@ -118,6 +119,9 @@ gstvideo::gstvideo(QWidget *parent) :
         qDebug("No se pudo linkear el bin y audio");              //linking the bin ghostpad to de audiosink
         return -1;
     }
+
+    //#############################################################################
+
     window = ui->widget->winId();
 
     cam_window_handle=window;
