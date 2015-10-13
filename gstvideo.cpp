@@ -4,10 +4,13 @@
 guintptr gstvideo::cam_window_handle;
 
 static GstElement *pipeline; //= gst_pipeline_new("pipeline");
+//static GstElement *bin; // audio bin
 static GstElement *curr ;//= gst_element_factory_make("identity", "curr"); //current efect
 static GstPad *blockpad; //source pad de mi fuente, en este caso v4l2src
 static GstElement *conv_before;// = gst_element_factory_make("videoconvert", "conv_after");
 static GstElement *conv_after;// = gst_element_factory_make("videoconvert", "conv_after");
+static GstPad *binpad; //ghost pad para el "bin"
+//static GstElement *volume;
 static int effect=0;
 
 //constructor, inicializo el gui, conecto los objetos, inicializo gstreamer,
@@ -57,12 +60,13 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->widget->setFixedWidth(640);
     ui->widget->setFixedHeight(480);
     gst_init(NULL, FALSE);
+
+    //##################### video elements #################################
+    pipeline = gst_pipeline_new("pipeline");
     this->src = gst_element_factory_make("v4l2src", "src");
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
     this->sink = gst_element_factory_make("ximagesink", "sink");
     this->videobalance = gst_element_factory_make("videobalance", "balance");
-    this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
-    pipeline = gst_pipeline_new("pipeline");
     this->caps = gst_caps_new_simple("video/x-raw",
                    "width", G_TYPE_INT, 640,
                    "height", G_TYPE_INT, 480,
@@ -74,16 +78,48 @@ gstvideo::gstvideo(QWidget *parent) :
     //se crearon todos los elementos ????
 
     if (!this->src || !this->sink || !this->conversor1 || !pipeline || !this->videobalance || !conv_before || !curr || !conv_after){
-        qDebug("no se crearon todos los elementos necesarios");
+        qDebug("no se crearon todos los elementos de video necesarios");
         return;
     }
 
+    //######################################################################
+
+    //##################### audio elements ##################################
+
+    this->audiosrc = gst_element_factory_make("alsasrc", "asrc");
+    this->conv = gst_element_factory_make("audioconvert","aconv");
+    this->volume = gst_element_factory_make("volume","volume");
+    this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
+    this->bin = gst_bin_new("bin");
+    if (!this->audiosrc || !this->conv || !this->bin || !this->volume){
+        qDebug("no se crearon todos los elementos de audio necesarios");
+        return;
+    }
+    g_object_set(this->volume, "volume", 0, NULL);
+    gst_bin_add_many(GST_BIN(this->bin), this->audiosrc, this->conv, this->volume, NULL);
+    gst_element_link_many(this->audiosrc, this->conv, this->volume, NULL);
+    binpad = gst_element_get_static_pad(this->volume, "src");             //ghostpad for my audio bin
+    gst_element_add_pad (this->bin, gst_ghost_pad_new ("src", binpad));
+    if(binpad != NULL)qDebug("GHOSTPAD ADDED");
+    gst_object_unref (binpad);
+
+
+    //###########################################################################
+
+    //###################### Global Pipeline ####################################
+
+
     gst_bin_add_many(GST_BIN(pipeline), this->src, this->conversor1, this->videobalance, conv_before,
-                     curr, conv_after, this->sink,NULL);
+                     curr, conv_after, this->sink, bin, this->audiosink, NULL);
     gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
     gst_element_link_many(this->src, this->conversor1,NULL);
     gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
+    if(!gst_element_link_many(this->bin, this->audiosink, NULL)){
+        qDebug("No se pudo linkear el bin y audio");              //linking the bin ghostpad to de audiosink
+        return -1;
+    }
     window = ui->widget->winId();
+
     cam_window_handle=window;
     this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
     gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
@@ -93,7 +129,7 @@ gstvideo::gstvideo(QWidget *parent) :
     connect(ui->slider2, SIGNAL(valueChanged(int)), this, SLOT(brightness(int)));
     connect(ui->slider3, SIGNAL(valueChanged(int)), this, SLOT(hue(int)));
     connect(ui->slider4, SIGNAL(valueChanged(int)), this, SLOT(saturation(int)));
-    connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(volume(int)));
+    connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(avolume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
 }
@@ -291,9 +327,7 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
 
 void gstvideo::start()
 {
-
     gst_element_set_state (pipeline, GST_STATE_PLAYING);
-    audio->start();
 }
 
 void gstvideo::stop()
@@ -303,7 +337,6 @@ void gstvideo::stop()
         gst_element_set_state (pipeline, GST_STATE_PAUSED);
         //g_object_unref(pipeline);
     }
-    audio->pause();
 }
 
 void gstvideo::contrast(int c){
@@ -334,6 +367,9 @@ void gstvideo::on_comboBox_currentIndexChanged(int index)
     gst_pad_add_probe(blockpad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, (GstPadProbeCallback)block_src, this->loop, NULL);
 }
 
-void gstvideo::volume(int y){
-    audio->avolume(y);
+void gstvideo::avolume(int y){
+    gdouble x = y/10.0;
+    g_print("%d", x);
+    gst_stream_volume_set_volume (GST_STREAM_VOLUME(this->volume), GST_STREAM_VOLUME_FORMAT_LINEAR, x);
+
 }
