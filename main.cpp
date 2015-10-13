@@ -1,5 +1,4 @@
 #include "gstvideo.h"
-#include "gstaudio.h"
 #include <QApplication>
 
 int main(int argc, char *argv[])
