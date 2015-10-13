@@ -36,6 +36,10 @@ private slots:
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);
 
+    void on_lineEdit_textChanged(const QString &arg1);
+
+    void on_lineEdit_editingFinished();
+
 private:
     Ui::gstvideo *ui;
     WId window;
