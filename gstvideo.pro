@@ -13,11 +13,9 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        gstvideo.cpp \
-    gstaudio.cpp
+        gstvideo.cpp
 
-HEADERS  += gstvideo.h \
-    gstaudio.h
+HEADERS  += gstvideo.h
 
 FORMS    += gstvideo.ui
 
