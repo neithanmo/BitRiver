@@ -218,6 +218,26 @@
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
+  <widget class="QComboBox" name="Resolution">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>750</y>
+     <width>77</width>
+     <height>27</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>750</y>
+     <width>113</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
