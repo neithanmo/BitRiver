@@ -1,5 +1,4 @@
 #include "gstvideo.h"
-#include "ui_gstvideo.h"
 
 guintptr gstvideo::cam_window_handle;
 
