@@ -221,8 +221,8 @@
   <widget class="QComboBox" name="Resolution">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>750</y>
+     <x>130</x>
+     <y>760</y>
      <width>77</width>
      <height>27</height>
     </rect>
@@ -231,7 +231,7 @@
   <widget class="QLineEdit" name="lineEdit">
    <property name="geometry">
     <rect>
-     <x>520</x>
+     <x>350</x>
      <y>750</y>
      <width>113</width>
      <height>21</height>
