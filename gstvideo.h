@@ -9,7 +9,9 @@
 #include <QMessageBox>
 #include <QSlider>
 #include <math.h>
+#include <QLineEdit>
 #include <gst/audio/streamvolume.h>
+#include "ui_gstvideo.h"
 
 
 namespace Ui {
@@ -36,9 +38,9 @@ private slots:
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);
 
-    void on_lineEdit_textChanged(const QString &arg1);
-
     void on_lineEdit_editingFinished();
+
+    void on_comboBox_2_currentIndexChanged(int index);
 
 private:
     Ui::gstvideo *ui;
