@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>741</width>
-    <height>680</height>
+    <height>885</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -199,7 +199,7 @@
    <property name="geometry">
     <rect>
      <x>350</x>
-     <y>620</y>
+     <y>640</y>
      <width>77</width>
      <height>27</height>
     </rect>
@@ -216,6 +216,36 @@
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="comboBox_2">
+   <property name="geometry">
+    <rect>
+     <x>490</x>
+     <y>640</y>
+     <width>77</width>
+     <height>27</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>700</y>
+     <width>113</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="spinBox">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>770</y>
+     <width>44</width>
+     <height>25</height>
+    </rect>
    </property>
   </widget>
  </widget>
