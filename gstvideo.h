@@ -37,6 +37,8 @@ private slots:
     void on_comboBox_currentIndexChanged(int index);
     void volume(int);
 
+    void on_lineEdit_editingFinished();
+
 private:
     Ui::gstvideo *ui;
     WId window;
