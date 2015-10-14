@@ -218,31 +218,6 @@
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QComboBox" name="comboBox_2">
-   <property name="geometry">
-    <rect>
-     <x>140</x>
-     <y>730</y>
-     <width>116</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QWidget" name="">
-   <property name="geometry">
-    <rect>
-     <x>340</x>
-     <y>680</y>
-     <width>118</width>
-     <height>56</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QLineEdit" name="lineEdit"/>
-    </item>
-   </layout>
-  </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
