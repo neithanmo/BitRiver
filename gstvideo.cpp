@@ -337,3 +337,8 @@ void gstvideo::on_comboBox_currentIndexChanged(int index)
 void gstvideo::volume(int y){
     audio->avolume(y);
 }
+
+void gstvideo::on_lineEdit_editingFinished()
+{
+
+}
