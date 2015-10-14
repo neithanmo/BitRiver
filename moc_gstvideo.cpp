@@ -20,7 +20,7 @@
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_gstvideo_t {
     QByteArrayData data[11];
-    char stringdata[102];
+    char stringdata[103];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -39,11 +39,11 @@ QT_MOC_LITERAL(6, 41, 3),
 QT_MOC_LITERAL(7, 45, 10),
 QT_MOC_LITERAL(8, 56, 31),
 QT_MOC_LITERAL(9, 88, 5),
-QT_MOC_LITERAL(10, 94, 6)
+QT_MOC_LITERAL(10, 94, 7)
     },
     "gstvideo\0start\0\0stop\0contrast\0brightness\0"
     "hue\0saturation\0on_comboBox_currentIndexChanged\0"
-    "index\0volume\0"
+    "index\0avolume\0"
 };
 #undef QT_MOC_LITERAL
 
@@ -95,7 +95,7 @@ void gstvideo::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 4: _t->hue((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 5: _t->saturation((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 6: _t->on_comboBox_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 7: _t->volume((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 7: _t->avolume((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
         }
     }
