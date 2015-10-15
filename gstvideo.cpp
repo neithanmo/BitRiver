@@ -46,6 +46,8 @@ gstvideo::gstvideo(QWidget *parent) :
                             <<"warptv"<<"shagadelictv"<< "revtv"<< "radioactv"<< "rippletv"<<"TehRoxx0r"<<"Cartoon"<<"invert"
                            <<"pixeliz0r"<<"Nervous"<<"Vertigo"<<"Color Distance"<<"perspective"<<"color-B"<<"Baltan"<<"Twolay0r"<<"threelay0r"
                            <<"bw0r"<<"Sobel"<<"Distort0r");
+    ui->Resolution->addItems(QStringList()<<"1080p" <<"720p"
+                            <<"480p"<<"360p"<<"240p");
     QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
                      ui->progressBar1, SLOT(setValue(int)));
     QObject::connect(ui->slider2, SIGNAL(valueChanged(int)),
@@ -67,7 +69,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
     this->sink = gst_element_factory_make("ximagesink", "sink");
     this->videobalance = gst_element_factory_make("videobalance", "balance");
-    this->caps = gst_caps_new_simple("video/x-raw",
+    this->Vcaps = gst_caps_new_simple("video/x-raw",
                    "width", G_TYPE_INT, 640,
                    "height", G_TYPE_INT, 480,
                     NULL);
@@ -90,16 +92,16 @@ gstvideo::gstvideo(QWidget *parent) :
     this->conv = gst_element_factory_make("audioconvert","aconv");
     this->volume = gst_element_factory_make("volume","volume");
     this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
-    this->bin = gst_bin_new("bin");
-    if (!this->audiosrc || !this->conv || !this->bin || !this->volume){
+    this->abin = gst_bin_new("abin");
+    if (!this->audiosrc || !this->conv || !this->abin || !this->volume){
         qDebug("no se crearon todos los elementos de audio necesarios");
         return;
     }
     g_object_set(this->volume, "volume", 0, NULL);
-    gst_bin_add_many(GST_BIN(this->bin), this->audiosrc, this->conv, this->volume, NULL);
+    gst_bin_add_many(GST_BIN(this->abin), this->audiosrc, this->conv, this->volume, NULL);
     gst_element_link_many(this->audiosrc, this->conv, this->volume, NULL);
     binpad = gst_element_get_static_pad(this->volume, "src");             //ghostpad for my audio bin
-    gst_element_add_pad (this->bin, gst_ghost_pad_new ("src", binpad));
+    gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
     if(binpad != NULL)qDebug("GHOSTPAD ADDED");
     gst_object_unref (binpad);
 
@@ -110,11 +112,11 @@ gstvideo::gstvideo(QWidget *parent) :
 
 
     gst_bin_add_many(GST_BIN(pipeline), this->src, this->conversor1, this->videobalance, conv_before,
-                     curr, conv_after, this->sink, bin, this->audiosink, NULL);
-    gst_element_link_filtered (this->conversor1,this->videobalance ,this->caps);
+                     curr, conv_after, this->sink, abin, this->audiosink, NULL);
+    gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
     gst_element_link_many(this->src, this->conversor1,NULL);
     gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
-    if(!gst_element_link_many(this->bin, this->audiosink, NULL)){
+    if(!gst_element_link_many(this->abin, this->audiosink, NULL)){
         qDebug("No se pudo linkear el bin y audio");              //linking the bin ghostpad to de audiosink
         return;
     }
@@ -377,3 +379,8 @@ void gstvideo::avolume(int y){
 }
 
 
+
+void gstvideo::on_lineEdit_2_cursorPositionChanged(int arg1, int arg2)
+{
+
+}
