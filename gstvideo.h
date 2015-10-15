@@ -38,21 +38,33 @@ private slots:
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);
 
-    void on_Resolution_activated(int index);
+    void on_lineEdit_2_cursorPositionChanged(int arg1, int arg2);
 
 private:
     Ui::gstvideo *ui;
     WId window;
-    GstCaps *caps;
+    GstCaps *Vcaps; //filtro para visualizar el stream a 640x480
+    GstCaps *Scaps; //resolucion del streaming, la resolucion es definida por el usuario
     GstElement *src;
-    GstElement *conversor1;
+    GstElement *conversor1; //videoconvert for visualization
     GstElement *videobalance;
     GstElement *sink;
     GstElement *audiosink;
     GstElement *audiosrc;
-    GstElement *conv;
-    GstElement *bin;
+    GstElement *conv;       //audioconvert
+    GstElement *abin;       //audio bin, para captura de microfono, control de volumen
+                            // tambien se utiliza para el streaming
+    GstElement *v4l2srcBin; //bin para captura local de la camara de la computadora
     GstElement *volume;
+    GstElement *aacparse;
+    GstElement *x264enc;
+    GstElement *faac;
+    GstElement *h264parse;
+    GstElement *tcpclientsrc;
+    GstElement *decodebin;
+    GstElement *avdec_h264;
+    GstElement *flvmux;
+    GstElement *Ltee; //tee for live streaming and visualization on screen
     GstBus *bus;
     GMainLoop *loop;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
