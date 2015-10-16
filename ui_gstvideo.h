@@ -13,12 +13,12 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
-#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
-#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressBar>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QSlider>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
@@ -29,34 +29,38 @@ QT_BEGIN_NAMESPACE
 class Ui_gstvideo
 {
 public:
-    QLineEdit *lineEdit_2;
     QWidget *widget;
-    QWidget *widget1;
+    QWidget *layoutWidget;
     QHBoxLayout *horizontalLayout;
     QSlider *slider3;
     QProgressBar *progressBar3;
-    QWidget *widget2;
+    QWidget *layoutWidget1;
     QHBoxLayout *horizontalLayout_2;
     QSlider *slider4;
     QProgressBar *progressBar4;
-    QWidget *widget3;
+    QWidget *layoutWidget2;
     QHBoxLayout *horizontalLayout_3;
     QSlider *slider1;
     QProgressBar *progressBar1;
-    QWidget *widget4;
+    QWidget *layoutWidget3;
     QHBoxLayout *horizontalLayout_4;
     QSlider *slider2;
     QProgressBar *progressBar2;
-    QWidget *widget5;
+    QWidget *layoutWidget4;
     QHBoxLayout *horizontalLayout_5;
     QSlider *slider5;
-    QCheckBox *checkBox;
-    QWidget *widget6;
+    QWidget *layoutWidget5;
     QVBoxLayout *verticalLayout;
     QToolButton *bplay;
     QToolButton *bstop;
     QComboBox *comboBox;
     QComboBox *Resolution;
+    QLabel *label;
+    QLabel *label_2;
+    QLabel *label_3;
+    QLabel *label_4;
+    QLabel *label_5;
+    QPushButton *pushButton;
 
     void setupUi(QWidget *gstvideo)
     {
@@ -64,164 +68,169 @@ public:
             gstvideo->setObjectName(QStringLiteral("gstvideo"));
         gstvideo->resize(741, 661);
         gstvideo->setMinimumSize(QSize(741, 0));
-        lineEdit_2 = new QLineEdit(gstvideo);
-        lineEdit_2->setObjectName(QStringLiteral("lineEdit_2"));
-        lineEdit_2->setGeometry(QRect(400, 610, 261, 21));
         widget = new QWidget(gstvideo);
         widget->setObjectName(QStringLiteral("widget"));
         widget->setGeometry(QRect(10, 0, 723, 425));
         widget->setMinimumSize(QSize(723, 0));
-        widget1 = new QWidget(gstvideo);
-        widget1->setObjectName(QStringLiteral("widget1"));
-        widget1->setGeometry(QRect(460, 490, 187, 29));
-        horizontalLayout = new QHBoxLayout(widget1);
+        layoutWidget = new QWidget(gstvideo);
+        layoutWidget->setObjectName(QStringLiteral("layoutWidget"));
+        layoutWidget->setGeometry(QRect(460, 510, 187, 29));
+        horizontalLayout = new QHBoxLayout(layoutWidget);
         horizontalLayout->setSpacing(6);
         horizontalLayout->setContentsMargins(11, 11, 11, 11);
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
         horizontalLayout->setContentsMargins(0, 0, 0, 0);
-        slider3 = new QSlider(widget1);
+        slider3 = new QSlider(layoutWidget);
         slider3->setObjectName(QStringLiteral("slider3"));
         slider3->setOrientation(Qt::Horizontal);
 
         horizontalLayout->addWidget(slider3);
 
-        progressBar3 = new QProgressBar(widget1);
+        progressBar3 = new QProgressBar(layoutWidget);
         progressBar3->setObjectName(QStringLiteral("progressBar3"));
         progressBar3->setValue(24);
 
         horizontalLayout->addWidget(progressBar3);
 
-        widget2 = new QWidget(gstvideo);
-        widget2->setObjectName(QStringLiteral("widget2"));
-        widget2->setGeometry(QRect(460, 550, 187, 29));
-        horizontalLayout_2 = new QHBoxLayout(widget2);
+        layoutWidget1 = new QWidget(gstvideo);
+        layoutWidget1->setObjectName(QStringLiteral("layoutWidget1"));
+        layoutWidget1->setGeometry(QRect(460, 570, 187, 29));
+        horizontalLayout_2 = new QHBoxLayout(layoutWidget1);
         horizontalLayout_2->setSpacing(6);
         horizontalLayout_2->setContentsMargins(11, 11, 11, 11);
         horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
         horizontalLayout_2->setContentsMargins(0, 0, 0, 0);
-        slider4 = new QSlider(widget2);
+        slider4 = new QSlider(layoutWidget1);
         slider4->setObjectName(QStringLiteral("slider4"));
         slider4->setMaximumSize(QSize(160, 16777215));
         slider4->setOrientation(Qt::Horizontal);
 
         horizontalLayout_2->addWidget(slider4);
 
-        progressBar4 = new QProgressBar(widget2);
+        progressBar4 = new QProgressBar(layoutWidget1);
         progressBar4->setObjectName(QStringLiteral("progressBar4"));
         progressBar4->setMaximumSize(QSize(118, 16777215));
         progressBar4->setValue(24);
 
         horizontalLayout_2->addWidget(progressBar4);
 
-        widget3 = new QWidget(gstvideo);
-        widget3->setObjectName(QStringLiteral("widget3"));
-        widget3->setGeometry(QRect(10, 490, 187, 29));
-        horizontalLayout_3 = new QHBoxLayout(widget3);
+        layoutWidget2 = new QWidget(gstvideo);
+        layoutWidget2->setObjectName(QStringLiteral("layoutWidget2"));
+        layoutWidget2->setGeometry(QRect(10, 510, 187, 29));
+        horizontalLayout_3 = new QHBoxLayout(layoutWidget2);
         horizontalLayout_3->setSpacing(6);
         horizontalLayout_3->setContentsMargins(11, 11, 11, 11);
         horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
         horizontalLayout_3->setContentsMargins(0, 0, 0, 0);
-        slider1 = new QSlider(widget3);
+        slider1 = new QSlider(layoutWidget2);
         slider1->setObjectName(QStringLiteral("slider1"));
         slider1->setMaximumSize(QSize(16777215, 27));
         slider1->setOrientation(Qt::Horizontal);
 
         horizontalLayout_3->addWidget(slider1);
 
-        progressBar1 = new QProgressBar(widget3);
+        progressBar1 = new QProgressBar(layoutWidget2);
         progressBar1->setObjectName(QStringLiteral("progressBar1"));
         progressBar1->setValue(24);
 
         horizontalLayout_3->addWidget(progressBar1);
 
-        widget4 = new QWidget(gstvideo);
-        widget4->setObjectName(QStringLiteral("widget4"));
-        widget4->setGeometry(QRect(10, 550, 187, 29));
-        horizontalLayout_4 = new QHBoxLayout(widget4);
+        layoutWidget3 = new QWidget(gstvideo);
+        layoutWidget3->setObjectName(QStringLiteral("layoutWidget3"));
+        layoutWidget3->setGeometry(QRect(10, 560, 187, 29));
+        horizontalLayout_4 = new QHBoxLayout(layoutWidget3);
         horizontalLayout_4->setSpacing(6);
         horizontalLayout_4->setContentsMargins(11, 11, 11, 11);
         horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
         horizontalLayout_4->setContentsMargins(0, 0, 0, 0);
-        slider2 = new QSlider(widget4);
+        slider2 = new QSlider(layoutWidget3);
         slider2->setObjectName(QStringLiteral("slider2"));
         slider2->setMaximumSize(QSize(160, 16777215));
         slider2->setOrientation(Qt::Horizontal);
 
         horizontalLayout_4->addWidget(slider2);
 
-        progressBar2 = new QProgressBar(widget4);
+        progressBar2 = new QProgressBar(layoutWidget3);
         progressBar2->setObjectName(QStringLiteral("progressBar2"));
         progressBar2->setMaximumSize(QSize(118, 16777215));
         progressBar2->setValue(24);
 
         horizontalLayout_4->addWidget(progressBar2);
 
-        widget5 = new QWidget(gstvideo);
-        widget5->setObjectName(QStringLiteral("widget5"));
-        widget5->setGeometry(QRect(10, 600, 182, 29));
-        horizontalLayout_5 = new QHBoxLayout(widget5);
+        layoutWidget4 = new QWidget(gstvideo);
+        layoutWidget4->setObjectName(QStringLiteral("layoutWidget4"));
+        layoutWidget4->setGeometry(QRect(10, 610, 182, 29));
+        horizontalLayout_5 = new QHBoxLayout(layoutWidget4);
         horizontalLayout_5->setSpacing(6);
         horizontalLayout_5->setContentsMargins(11, 11, 11, 11);
         horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_5"));
         horizontalLayout_5->setContentsMargins(0, 0, 0, 0);
-        slider5 = new QSlider(widget5);
+        slider5 = new QSlider(layoutWidget4);
         slider5->setObjectName(QStringLiteral("slider5"));
         slider5->setOrientation(Qt::Horizontal);
 
         horizontalLayout_5->addWidget(slider5);
 
-        checkBox = new QCheckBox(widget5);
-        checkBox->setObjectName(QStringLiteral("checkBox"));
-
-        horizontalLayout_5->addWidget(checkBox);
-
-        widget6 = new QWidget(gstvideo);
-        widget6->setObjectName(QStringLiteral("widget6"));
-        widget6->setGeometry(QRect(300, 490, 79, 116));
-        verticalLayout = new QVBoxLayout(widget6);
+        layoutWidget5 = new QWidget(gstvideo);
+        layoutWidget5->setObjectName(QStringLiteral("layoutWidget5"));
+        layoutWidget5->setGeometry(QRect(300, 490, 79, 116));
+        verticalLayout = new QVBoxLayout(layoutWidget5);
         verticalLayout->setSpacing(6);
         verticalLayout->setContentsMargins(11, 11, 11, 11);
         verticalLayout->setObjectName(QStringLiteral("verticalLayout"));
         verticalLayout->setContentsMargins(0, 0, 0, 0);
-        bplay = new QToolButton(widget6);
+        bplay = new QToolButton(layoutWidget5);
         bplay->setObjectName(QStringLiteral("bplay"));
 
         verticalLayout->addWidget(bplay);
 
-        bstop = new QToolButton(widget6);
+        bstop = new QToolButton(layoutWidget5);
         bstop->setObjectName(QStringLiteral("bstop"));
         bstop->setMaximumSize(QSize(81, 16777215));
 
         verticalLayout->addWidget(bstop);
 
-        comboBox = new QComboBox(widget6);
+        comboBox = new QComboBox(layoutWidget5);
         comboBox->setObjectName(QStringLiteral("comboBox"));
 
         verticalLayout->addWidget(comboBox);
 
-        Resolution = new QComboBox(widget6);
+        Resolution = new QComboBox(layoutWidget5);
         Resolution->setObjectName(QStringLiteral("Resolution"));
 
         verticalLayout->addWidget(Resolution);
 
-        slider3->raise();
-        progressBar3->raise();
-        checkBox->raise();
-        bplay->raise();
-        comboBox->raise();
-        progressBar1->raise();
-        slider2->raise();
-        slider4->raise();
-        lineEdit_2->raise();
+        label = new QLabel(gstvideo);
+        label->setObjectName(QStringLiteral("label"));
+        label->setGeometry(QRect(10, 490, 54, 15));
+        label_2 = new QLabel(gstvideo);
+        label_2->setObjectName(QStringLiteral("label_2"));
+        label_2->setGeometry(QRect(10, 540, 61, 16));
+        label_3 = new QLabel(gstvideo);
+        label_3->setObjectName(QStringLiteral("label_3"));
+        label_3->setGeometry(QRect(10, 590, 54, 15));
+        label_4 = new QLabel(gstvideo);
+        label_4->setObjectName(QStringLiteral("label_4"));
+        label_4->setGeometry(QRect(460, 490, 54, 15));
+        label_5 = new QLabel(gstvideo);
+        label_5->setObjectName(QStringLiteral("label_5"));
+        label_5->setGeometry(QRect(460, 550, 61, 16));
+        pushButton = new QPushButton(gstvideo);
+        pushButton->setObjectName(QStringLiteral("pushButton"));
+        pushButton->setGeometry(QRect(460, 620, 85, 27));
+        layoutWidget->raise();
+        layoutWidget->raise();
+        layoutWidget->raise();
+        layoutWidget->raise();
+        layoutWidget->raise();
+        layoutWidget->raise();
         widget->raise();
-        progressBar4->raise();
-        slider5->raise();
-        slider1->raise();
-        Resolution->raise();
-        progressBar2->raise();
-        bstop->raise();
-        progressBar3->raise();
-        progressBar4->raise();
+        label->raise();
+        label_2->raise();
+        label_3->raise();
+        label_4->raise();
+        label_5->raise();
+        pushButton->raise();
 
         retranslateUi(gstvideo);
 
@@ -237,7 +246,6 @@ public:
 #ifndef QT_NO_WHATSTHIS
         slider2->setWhatsThis(QApplication::translate("gstvideo", "<html><head/><body><p>Brillo</p></body></html>", 0));
 #endif // QT_NO_WHATSTHIS
-        checkBox->setText(QApplication::translate("gstvideo", "CheckBox", 0));
 #ifndef QT_NO_WHATSTHIS
         bplay->setWhatsThis(QApplication::translate("gstvideo", "<html><head/><body><p>Play</p></body></html>", 0));
 #endif // QT_NO_WHATSTHIS
@@ -246,6 +254,12 @@ public:
 #ifndef QT_NO_WHATSTHIS
         comboBox->setWhatsThis(QApplication::translate("gstvideo", "<html><head/><body><p>efectos</p></body></html>", 0));
 #endif // QT_NO_WHATSTHIS
+        label->setText(QApplication::translate("gstvideo", "Contrast", 0));
+        label_2->setText(QApplication::translate("gstvideo", "Brightness", 0));
+        label_3->setText(QApplication::translate("gstvideo", "Volume", 0));
+        label_4->setText(QApplication::translate("gstvideo", "Hue", 0));
+        label_5->setText(QApplication::translate("gstvideo", "Saturation", 0));
+        pushButton->setText(QApplication::translate("gstvideo", "Settings", 0));
     } // retranslateUi
 
 };
