@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <gst/audio/streamvolume.h>
 #include "ui_gstvideo.h"
+#include "inputbox.h"
 
 
 namespace Ui {
@@ -38,8 +39,6 @@ private slots:
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);
 
-    void on_lineEdit_2_cursorPositionChanged(int arg1, int arg2);
-
 private:
     Ui::gstvideo *ui;
     WId window;
@@ -65,6 +64,7 @@ private:
     GstElement *avdec_h264;
     GstElement *flvmux;
     GstElement *Ltee; //tee for live streaming and visualization on screen
+    GstElement *rtmp;
     GstBus *bus;
     GMainLoop *loop;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
