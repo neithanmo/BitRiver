@@ -56,8 +56,16 @@ gstvideo::gstvideo(QWidget *parent) :
                      ui->progressBar3, SLOT(setValue(int)));
     QObject::connect(ui->slider4, SIGNAL(valueChanged(int)),
                      ui->progressBar4, SLOT(setValue(int)));
-
+    inputBox *input = new inputBox;
+    input->exec();
+    QString youkey = input->youtube;
+    int Resolution = input->resolution;
+    //QString resol =
+    delete input;
+    g_print("%s/n", youkey.toUtf8().constData());
+    g_print("%d/n", Resolution);
     //WId window = ui->widget->winId();
+
     ui->widget->setFixedWidth(640);
     ui->widget->setFixedHeight(480);
     gst_init(NULL, FALSE);
@@ -102,11 +110,15 @@ gstvideo::gstvideo(QWidget *parent) :
     gst_element_link_many(this->audiosrc, this->conv, this->volume, NULL);
     binpad = gst_element_get_static_pad(this->volume, "src");             //ghostpad for my audio bin
     gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
-    if(binpad != NULL)qDebug("GHOSTPAD ADDED");
+    //if(binpad != NULL)qDebug("GHOSTPAD ADDED");
     gst_object_unref (binpad);
 
 
     //###########################################################################
+
+    //######################### Varios elementos ################################
+
+    this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
 
     //###################### Global Pipeline ####################################
 
@@ -137,6 +149,8 @@ gstvideo::gstvideo(QWidget *parent) :
     connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(avolume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
+    //connect(ui->pushButton,SIGNAL(clicked()), this, SLOT() )
+
 }
 
 //destructor
@@ -379,8 +393,3 @@ void gstvideo::avolume(int y){
 }
 
 
-
-void gstvideo::on_lineEdit_2_cursorPositionChanged(int arg1, int arg2)
-{
-
-}
