@@ -34,7 +34,7 @@ audioencoder="faac bitrate=$abitrate"
     queue !\
     flvmux name=muxer streamable=true !\
     queue !\
-    tcpserversink host=163.178.119.210 port=6800 sync-method=2 recover-policy=keyframe
+    tcpserversink host=x.x.x.x port=6800 sync-method=2 recover-policy=keyframe
 )
 
 
