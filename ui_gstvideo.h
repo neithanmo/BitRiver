@@ -18,7 +18,6 @@
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressBar>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QSlider>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
@@ -54,13 +53,11 @@ public:
     QToolButton *bplay;
     QToolButton *bstop;
     QComboBox *comboBox;
-    QComboBox *Resolution;
     QLabel *label;
     QLabel *label_2;
     QLabel *label_3;
     QLabel *label_4;
     QLabel *label_5;
-    QPushButton *pushButton;
 
     void setupUi(QWidget *gstvideo)
     {
@@ -195,11 +192,6 @@ public:
 
         verticalLayout->addWidget(comboBox);
 
-        Resolution = new QComboBox(layoutWidget5);
-        Resolution->setObjectName(QStringLiteral("Resolution"));
-
-        verticalLayout->addWidget(Resolution);
-
         label = new QLabel(gstvideo);
         label->setObjectName(QStringLiteral("label"));
         label->setGeometry(QRect(10, 490, 54, 15));
@@ -215,9 +207,6 @@ public:
         label_5 = new QLabel(gstvideo);
         label_5->setObjectName(QStringLiteral("label_5"));
         label_5->setGeometry(QRect(460, 550, 61, 16));
-        pushButton = new QPushButton(gstvideo);
-        pushButton->setObjectName(QStringLiteral("pushButton"));
-        pushButton->setGeometry(QRect(460, 620, 85, 27));
         layoutWidget->raise();
         layoutWidget->raise();
         layoutWidget->raise();
@@ -230,7 +219,6 @@ public:
         label_3->raise();
         label_4->raise();
         label_5->raise();
-        pushButton->raise();
 
         retranslateUi(gstvideo);
 
@@ -259,7 +247,6 @@ public:
         label_3->setText(QApplication::translate("gstvideo", "Volume", 0));
         label_4->setText(QApplication::translate("gstvideo", "Hue", 0));
         label_5->setText(QApplication::translate("gstvideo", "Saturation", 0));
-        pushButton->setText(QApplication::translate("gstvideo", "Settings", 0));
     } // retranslateUi
 
 };
