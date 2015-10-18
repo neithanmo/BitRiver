@@ -8,9 +8,9 @@ VIDEOFORMAT="videoconvert ! videorate ! videoscale ! videoconvert ! video/x-raw,
 
 ######################Direcciones ip de los Pi #####################################################################
 
-SRC1="tcpclientsrc host=163.178.119.218 port=5000 ! flvdemux name=demux1 ! h264parse ! avdec_h264 ! videorate "
-SRC2="tcpclientsrc host=163.178.119.248 port=5500 ! flvdemux name=demux2 ! h264parse ! avdec_h264 ! videorate "
-SRC3="tcpclientsrc host=163.178.119.249 port=5800 ! flvdemux name=demux3 ! h264parse ! avdec_h264 ! videorate "
+SRC1="tcpclientsrc host=x.x.x.x port=5000 ! flvdemux name=demux1 ! h264parse ! avdec_h264 ! videorate "
+SRC2="tcpclientsrc host=x.x.x.x port=5500 ! flvdemux name=demux2 ! h264parse ! avdec_h264 ! videorate "
+SRC3="tcpclientsrc host=x.x.x.x port=5800 ! flvdemux name=demux3 ! h264parse ! avdec_h264 ! videorate "
 
 ###################### Settings para los sockets de cada feed #######################################################
 
