@@ -6,8 +6,17 @@ inputBox::inputBox(QWidget *parent) :
     ui(new Ui::inputBox)
 {
     ui->setupUi(this);
-    ui->comboBox->addItems(QStringList()<<"1080p" <<"720p"
-                            <<"480p"<<"360p"<<"240p");
+    ui->Resolution->addItems(QStringList()<<"240p" <<"360p"
+                            <<"480p"<<"720p"<<"1080p"); //resolutions accepted by youtube servers
+    ui->Channels->addItems(QStringList()<<"1"<<"2"<<"3"<<"4"<<"5"<<"6"<<"7"<<"8");
+    ui->Audiorate->addItems(QStringList()<<"16 kHz"<<"22.05 kHz"<<"44.1 kHz"<<"48 kHz"<<"96 kHz");
+    ui->Framerate->addItems(QStringList()<<"20"<<"25"<<"30"<<"60");
+    ui->AudioBitRate->addItems(QStringList()<<"128 kbps"<<"256 kbps"<<"320 kbps");
+    ui->VideoBitRate->addItems(QStringList()<<"400 kbit/s"<<"1 Mbit/s"<<"1.15 Mbit/s"<<"2.5 Mbit/s"<<"4 Mbit/s"
+                               <<"8 Mbit/s"<<"10 Mbit/s"<<"15 Mbit/s"<<"20 Mbit/s");
+    this->setWindowTitle("Streaming Settings");
+
+
 }
 
 
@@ -18,30 +27,182 @@ inputBox::~inputBox()
 
 void inputBox::on_buttonBox_accepted()
 {
-    youtube=ui->lineEdit->text();
+    this->youtube=ui->youtubeLine->text();
+    //this->abrate=ui->abitrate->
+
 }
 
-void inputBox::on_comboBox_currentIndexChanged(int index)
+void inputBox::on_Resolution_currentIndexChanged(int index)
 {
-    int i=ui->comboBox->currentIndex();
-    switch (i){
+    //"240p" <<"360p"<<"480p"<<"720p"<<"1080p"
+    switch (index){
     case 0:
-        resolution = 1080;
+        resolutionX = 426;
+        resolutionY = 240;
         break;
     case 1:
-        resolution = 720;
+        resolutionX = 640;
+        resolutionY = 360;
         break;
     case 2:
-        resolution = 480;
+        resolutionX = 854;
+        resolutionY = 480;
         break;
     case 3:
-        resolution = 360;
+        resolutionX = 1280;
+        resolutionY = 720;
         break;
     case 4:
-        resolution = 240;
+        resolutionX = 1920;
+        resolutionY = 1080;
         break;
     default:
-        resolution = 480;
+        resolutionX = 854;
+        resolutionY = 480;
         break;
     }
+}
+
+
+
+void inputBox::on_Audiorate_currentIndexChanged(int index)
+{
+    //"8 kHz"<<"16 kHz"<<"22.05 kHz"<<"44.1 kHz"<<"48 kHz"<<"96 kHz");
+    switch (index){
+    case 0:
+        this->arate = 16000;
+        break;
+    case 1:
+        this->arate = 22050;
+        break;
+    case 2:
+        this->arate = 44100;
+        break;
+    case 3:
+        this->arate = 48000;
+        break;
+    case 4:
+        this->arate = 96000;
+        break;
+    default:
+        this->arate = 44100;
+        break;
+    }
+
+
+}
+
+void inputBox::on_Channels_currentIndexChanged(int index)
+{
+    //"1"<<"2"<<"3"<<"4"<<"5"<<"6"<<"7"<<"8"
+    switch (index){
+    case 0:
+        this->channels = 1;
+        break;
+    case 1:
+        this->channels = 2;
+        break;
+    case 2:
+        this->channels = 3;
+        break;
+    case 3:
+        this->channels = 4;
+        break;
+    case 4:
+        this->channels = 5;
+        break;
+    case 5:
+        this->channels = 6;
+        break;
+    case 6:
+        this->channels = 7;
+        break;
+    case 7:
+        this->channels = 8;
+        break;
+    default:
+        this->channels = 2;
+        break;
+    }
+
+}
+
+void inputBox::on_VideoBitRate_currentIndexChanged(int index)
+{
+    //"400 kbit/s"<<"1 Mbit/s"<<"1.15 Mbit/s"<<"2.5 Mbit/s"<<"4 Mbit/s"
+    //<<"8 Mbit/s"<<"10 Mbit/s"<<"20 Mbit/s"
+    switch (index){
+    case 0:
+        this->vbrate = 1000;
+        break;
+    case 1:
+        this->vbrate = 1115;
+        break;
+    case 2:
+        this->vbrate = 2500;
+        break;
+    case 3:
+        this->vbrate = 4000;
+        break;
+    case 4:
+        this->vbrate = 8000;
+        break;
+    case 5:
+        this->vbrate = 10000;
+        break;
+    case 6:
+        this->vbrate = 15000;
+        break;
+    case 7:
+        this->vbrate = 2000;
+        break;
+    default:
+        this->vbrate = 4000;
+        break;
+    }
+
+}
+
+void inputBox::on_AudioBitRate_currentIndexChanged(int index)
+{
+    //"128 kbps"<<"256 kbps"<<"320 kbps"
+    switch (index){
+    case 0:
+        this->abrate = 128000;
+        break;
+    case 1:
+        this->abrate = 256000;
+        break;
+    case 2:
+        this->abrate = 320000;
+        break;
+    default:
+        this->abrate = 128000;
+        break;
+    }
+
+
+}
+
+void inputBox::on_Framerate_currentIndexChanged(int index)
+{
+    //"20"<<"25"<<"30"<<"60"
+    switch (index){
+    case 0:
+        this->framerate = 20;
+        break;
+    case 1:
+        this->framerate = 25;
+        break;
+    case 2:
+        this->framerate = 30;
+        break;
+    case 3:
+        this->framerate = 60;
+        break;
+    default:
+        this->framerate = 25;
+        break;
+    }
+
 }
