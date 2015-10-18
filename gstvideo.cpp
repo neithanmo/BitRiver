@@ -46,8 +46,6 @@ gstvideo::gstvideo(QWidget *parent) :
                             <<"warptv"<<"shagadelictv"<< "revtv"<< "radioactv"<< "rippletv"<<"TehRoxx0r"<<"Cartoon"<<"invert"
                            <<"pixeliz0r"<<"Nervous"<<"Vertigo"<<"Color Distance"<<"perspective"<<"color-B"<<"Baltan"<<"Twolay0r"<<"threelay0r"
                            <<"bw0r"<<"Sobel"<<"Distort0r");
-    ui->Resolution->addItems(QStringList()<<"1080p" <<"720p"
-                            <<"480p"<<"360p"<<"240p");
     QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
                      ui->progressBar1, SLOT(setValue(int)));
     QObject::connect(ui->slider2, SIGNAL(valueChanged(int)),
@@ -59,11 +57,17 @@ gstvideo::gstvideo(QWidget *parent) :
     inputBox *input = new inputBox;
     input->exec();
     QString youkey = input->youtube;
-    int Resolution = input->resolution;
+    int width = input->resolutionX;
+    int heigth = input->resolutionY;
+    int framerate = input->framerate;
+    int audiorate = input->arate;
+    int channels = input->channels;
+    int abitrate = input->abrate;
+    int vbitrate = input->vbrate;
     //QString resol =
     delete input;
     g_print("%s/n", youkey.toUtf8().constData());
-    g_print("%d/n", Resolution);
+    g_print("%d/n", heigth);
     //WId window = ui->widget->winId();
 
     ui->widget->setFixedWidth(640);
