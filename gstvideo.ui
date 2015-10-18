@@ -234,9 +234,6 @@
       </property>
      </widget>
     </item>
-    <item>
-     <widget class="QComboBox" name="Resolution"/>
-    </item>
    </layout>
   </widget>
   <widget class="QLabel" name="label">
@@ -304,19 +301,6 @@
     <string>Saturation</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
-   <property name="geometry">
-    <rect>
-     <x>460</x>
-     <y>620</y>
-     <width>85</width>
-     <height>27</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Settings</string>
-   </property>
-  </widget>
   <zorder>layoutWidget</zorder>
   <zorder>layoutWidget</zorder>
   <zorder>layoutWidget</zorder>
@@ -329,7 +313,6 @@
   <zorder>label_3</zorder>
   <zorder>label_4</zorder>
   <zorder>label_5</zorder>
-  <zorder>pushButton</zorder>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
