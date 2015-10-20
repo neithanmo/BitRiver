@@ -8,6 +8,8 @@ inputBox::inputBox(QWidget *parent) :
     ui->setupUi(this);
     ui->Resolution->addItems(QStringList()<<"240p" <<"360p"
                             <<"480p"<<"720p"<<"1080p"); //resolutions accepted by youtube servers
+    //QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
+                     //ui->progressBar1, SLOT(setValue(int)));
     ui->Channels->addItems(QStringList()<<"1"<<"2"<<"3"<<"4"<<"5"<<"6"<<"7"<<"8");
     ui->Audiorate->addItems(QStringList()<<"16 kHz"<<"22.05 kHz"<<"44.1 kHz"<<"48 kHz"<<"96 kHz");
     ui->Framerate->addItems(QStringList()<<"20"<<"25"<<"30"<<"60");
@@ -204,5 +206,15 @@ void inputBox::on_Framerate_currentIndexChanged(int index)
         this->framerate = 25;
         break;
     }
+
+}
+
+void inputBox::on_VideoSRC_currentIndexChanged(int index)
+{
+
+}
+
+void inputBox::on_AudioSRC_currentIndexChanged(int index)
+{
 
 }
