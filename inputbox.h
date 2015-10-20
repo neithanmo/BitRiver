@@ -17,8 +17,9 @@ public:
     ~inputBox();
     QString youtube;
     int resolutionX, resolutionY;
-    int arate, channels,framerate;
-    int vbrate,abrate;
+    int arate, channels,framerate; //audio rate, channels and frame rate for system ettings
+    int vbrate,abrate, videoSRC, audioSRC, videoPath; //where is the ip of my source or path to a file
+    int audioPath; //where is my audio src, what cards?, ip, ec.
 
 
 private slots:
@@ -35,6 +36,10 @@ private slots:
     void on_AudioBitRate_currentIndexChanged(int index);
 
     void on_Framerate_currentIndexChanged(int index);
+
+    void on_VideoSRC_currentIndexChanged(int index);
+
+    void on_AudioSRC_currentIndexChanged(int index);
 
 private:
     Ui::inputBox *ui;
