@@ -66,8 +66,11 @@ gstvideo::gstvideo(QWidget *parent) :
     int vbitrate = input->vbrate;
     //QString resol =
     delete input;
-    g_print("%s/n", youkey.toUtf8().constData());
-    g_print("%d/n", heigth);
+    g_print("youtube key is : %s \n", youkey.toUtf8().constData());
+    g_print("video Resolution: %dx%d \n", width, heigth);
+    g_print("audio rate is: %d; audio bitrate is: %d \n", audiorate, abitrate);
+    g_print("video settings - framerate: %d, video bitrate: %d \n",framerate, vbitrate);
+    g_print("audio channels is: %d \n", channels);
     //WId window = ui->widget->winId();
 
     ui->widget->setFixedWidth(640);
@@ -77,21 +80,20 @@ gstvideo::gstvideo(QWidget *parent) :
     //##################### video elements ###################################
 
     pipeline = gst_pipeline_new("pipeline");
-    this->src = gst_element_factory_make("v4l2src", "src");
+    this->Vsrc = gst_element_factory_make("v4l2src", "src");
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
     this->sink = gst_element_factory_make("ximagesink", "sink");
     this->videobalance = gst_element_factory_make("videobalance", "balance");
-    this->Vcaps = gst_caps_new_simple("video/x-raw",
-                   "width", G_TYPE_INT, 640,
-                   "height", G_TYPE_INT, 480,
-                    NULL);
-    blockpad = gst_element_get_static_pad(this->src, "src");
+    blockpad = gst_element_get_static_pad(this->Vsrc, "src");
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
     curr = gst_element_factory_make("identity", "curr");
+    this->x264enc = gst_element_factory_make("x264enc","x264enc");
+    this->h264parse = gst_element_factory_make("h264parse","h264parse");
+    this->avdec_h264 = gst_element_factory_make("avdec_h264","avdec_h264");
     //se crearon todos los elementos ????
 
-    if (!this->src || !this->sink || !this->conversor1 || !pipeline || !this->videobalance || !conv_before || !curr || !conv_after){
+    if (!this->Vsrc || !this->sink || !this->conversor1 || !pipeline || !this->videobalance || !conv_before || !curr || !conv_after){
         qDebug("no se crearon todos los elementos de video necesarios");
         return;
     }
@@ -104,6 +106,8 @@ gstvideo::gstvideo(QWidget *parent) :
     this->conv = gst_element_factory_make("audioconvert","aconv");
     this->volume = gst_element_factory_make("volume","volume");
     this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
+    this->faac = gst_element_factory_make("faac","faac");
+    this->aacparse = gst_element_factory_make("aacparse", "aacparse");
     this->abin = gst_bin_new("abin");
     if (!this->audiosrc || !this->conv || !this->abin || !this->volume){
         qDebug("no se crearon todos los elementos de audio necesarios");
@@ -123,14 +127,26 @@ gstvideo::gstvideo(QWidget *parent) :
     //######################### Varios elementos ################################
 
     this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
+    this->flvmux = gst_element_factory_make("flvmux","flvmux");
+    this->tcpclientsrc = gst_element_factory_make("tcpclientsrc","tcpclientsrc");
+    this->decodebin = gst_element_factory_make("decodebin","decodebin");
+    this->Ltee = gst_element_factory_make("tee","tee");
+    this->Vcaps = gst_caps_new_simple("video/x-raw",
+                   "width", G_TYPE_INT, 640,
+                   "height", G_TYPE_INT, 480,
+                    NULL);
+    this->Scaps = gst_caps_new_simple("video/x-raw",
+                   "width", G_TYPE_INT, width,
+                   "height", G_TYPE_INT, heigth,
+                    NULL);
 
     //###################### Global Pipeline ####################################
 
 
-    gst_bin_add_many(GST_BIN(pipeline), this->src, this->conversor1, this->videobalance, conv_before,
+    gst_bin_add_many(GST_BIN(pipeline), this->Vsrc, this->conversor1, this->videobalance, conv_before,
                      curr, conv_after, this->sink, abin, this->audiosink, NULL);
     gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
-    gst_element_link_many(this->src, this->conversor1,NULL);
+    gst_element_link_many(this->Vsrc, this->conversor1,NULL);
     gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
     if(!gst_element_link_many(this->abin, this->audiosink, NULL)){
         qDebug("No se pudo linkear el bin y audio");              //linking the bin ghostpad to de audiosink
@@ -176,7 +192,7 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
     GstVideoOverlay *overlay;
     overlay = GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (message));
     gst_video_overlay_set_window_handle (overlay, cam_window_handle);
-    g_print("solicitando ventana /n");
+    g_print("solicitando ventana \ n");
 
     gst_message_unref (message);
     return GST_BUS_DROP;
@@ -222,8 +238,8 @@ void gstvideo::update_color_channel (gchar *channel_name, gint dvalue, GstColorB
 GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data){
 
     GstPad *srcpad, *sinkpad;
-    GST_DEBUG_OBJECT(pad, "blocking pad now");
-
+    //GST_DEBUG_OBJECT(pad, "blocking pad now");
+    g_print("%s \n", "blocking pad now");
     /*procedo a remover el probe, debido a que instalare un nuevo probe, ademas ya el
      * blockpad esta bloqueado*/
 
@@ -232,6 +248,7 @@ GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gpoint
     srcpad = gst_element_get_static_pad (curr, "src");
     gst_pad_add_probe(srcpad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, (GstPadProbeCallback)event_eos, user_data, NULL);
     gst_object_unref (srcpad);
+    g_print("%s \n", "installing EOS probe");
 
     /* push EOS into the element, the probe will be fired when the
      * EOS leaves the effect and it has thus drained all of its data */
@@ -325,8 +342,8 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
     }
 
   if(next==NULL){
-      g_print("%s","error, no se puedo crear el elemento /n");
-      g_print("%s","setting default effect: identity /n");
+      g_print("%s \n","error, no se puedo crear el elemento");
+      g_print("%s \n","setting default effect: identity");
       next = gst_element_factory_make("identity", "next");
   }
 
@@ -392,7 +409,7 @@ void gstvideo::on_comboBox_currentIndexChanged(int index)
 
 void gstvideo::avolume(int y){
     gdouble x = y/10.0;
-    g_print("%d", x);
+    g_print("%d \n", x);
     gst_stream_volume_set_volume (GST_STREAM_VOLUME(this->volume), GST_STREAM_VOLUME_FORMAT_LINEAR, x);
 }
 
