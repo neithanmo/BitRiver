@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>660</x>
-     <y>50</y>
+     <y>30</y>
      <width>85</width>
      <height>60</height>
     </rect>
@@ -185,77 +185,82 @@
     <string>Signal Sources</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QCheckBox" name="Record">
    <property name="geometry">
     <rect>
-     <x>500</x>
-     <y>240</y>
-     <width>130</width>
-     <height>46</height>
+     <x>430</x>
+     <y>260</y>
+     <width>119</width>
+     <height>23</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_3">
-    <item>
-     <widget class="QLabel" name="label_8">
-      <property name="text">
-       <string>Recording on computer</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QCheckBox" name="Record">
-      <property name="text">
-       <string>CheckBox</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
+   <property name="text">
+    <string>Local Recording</string>
+   </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QLabel" name="label_9">
    <property name="geometry">
     <rect>
-     <x>400</x>
-     <y>50</y>
-     <width>231</width>
-     <height>161</height>
+     <x>540</x>
+     <y>40</y>
+     <width>101</width>
+     <height>23</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_4">
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_11">
-      <item>
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Video Source</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="VideoSRC"/>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="VideoPath"/>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_13">
-      <item>
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>Audio Source</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="AudioSRC"/>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="AudioPath"/>
-    </item>
-   </layout>
+   <property name="text">
+    <string>External Sources</string>
+   </property>
+  </widget>
+  <widget class="QSplitter" name="splitter">
+   <property name="geometry">
+    <rect>
+     <x>360</x>
+     <y>40</y>
+     <width>106</width>
+     <height>77</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+   <widget class="QCheckBox" name="checkBox">
+    <property name="text">
+     <string>Local Sources</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="LocalCamera"/>
+   <widget class="QComboBox" name="soundCards"/>
+  </widget>
+  <widget class="QSplitter" name="splitter_2">
+   <property name="geometry">
+    <rect>
+     <x>540</x>
+     <y>65</y>
+     <width>116</width>
+     <height>151</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+   <widget class="QComboBox" name="VideoSRC"/>
+   <widget class="QLabel" name="label_8">
+    <property name="text">
+     <string>Video</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="VideoPath">
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_10">
+    <property name="text">
+     <string>Audio</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="AudioSRC"/>
+   <widget class="QLineEdit" name="AudioPath"/>
   </widget>
  </widget>
  <resources/>
@@ -267,8 +272,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>660</x>
+     <y>89</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -283,12 +288,76 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>660</x>
+     <y>89</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>VideoPath</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>454</x>
+     <y>51</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>542</x>
+     <y>121</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>AudioPath</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>436</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>549</x>
+     <y>208</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>VideoSRC</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>464</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>555</x>
+     <y>74</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>AudioSRC</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>420</x>
+     <y>58</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>552</x>
+     <y>179</y>
     </hint>
    </hints>
   </connection>
