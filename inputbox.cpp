@@ -1,5 +1,6 @@
 #include "inputbox.h"
 #include "ui_inputbox.h"
+#include<QFileDialog>
 
 inputBox::inputBox(QWidget *parent) :
     QDialog(parent),
@@ -16,6 +17,8 @@ inputBox::inputBox(QWidget *parent) :
     ui->AudioBitRate->addItems(QStringList()<<"128 kbps"<<"256 kbps"<<"320 kbps");
     ui->VideoBitRate->addItems(QStringList()<<"400 kbit/s"<<"1 Mbit/s"<<"1.15 Mbit/s"<<"2.5 Mbit/s"<<"4 Mbit/s"
                                <<"8 Mbit/s"<<"10 Mbit/s"<<"15 Mbit/s"<<"20 Mbit/s");
+    ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
+    ui->AudioSRC->addItems(QStringList()<<""<<"tcp"<<"File"<<"the same");
     this->setWindowTitle("Streaming Settings");
 
 
@@ -31,6 +34,8 @@ void inputBox::on_buttonBox_accepted()
 {
     this->youtube=ui->youtubeLine->text();
     //this->abrate=ui->abitrate->
+    this->audioPath=ui->AudioPath->text();
+    this->videoPath=ui->VideoPath->text();
 
 }
 
@@ -211,10 +216,105 @@ void inputBox::on_Framerate_currentIndexChanged(int index)
 
 void inputBox::on_VideoSRC_currentIndexChanged(int index)
 {
+    //""<<"tcp"<<"File"
+    this->videoBIN=index;
+    QString filename;
+    switch (index){
+    case 0:
+         break;
+    case 1:
+        QMessageBox::information(this,
+                                 "tcp input stream example", "write your ip and port of your audio server on the lineEdit below\n"
+                                 "for example: \n 192.168.0.1:6000 ; here the host is 192.168.0.1 and the port is: 6000 ",
+                                 QMessageBox::Ok);
+        break;
+    case 2:
+        filename = QFileDialog::getOpenFileName(this, tr("opening"), "/home", "All files(*)");
+        g_print("%s \n", filename.toUtf8().constData());
+        break;
+    default:
+        break;
+    }
 
 }
 
 void inputBox::on_AudioSRC_currentIndexChanged(int index)
 {
+    //"microfono"<<"tcp"<<"File"<<"same Videosrc"
+    this->audioBIN = index;
+     QString filename;
+    switch (index){
+    case 0:
+        break;
+    case 1:
+        QMessageBox::information(this,
+                                 "tcp input stream example", "write your ip and port of your audio server on the lineEdit below\n"
+                                 "for example: \n 192.168.0.1:6000 ; here the host is 192.168.0.1 and the port is: 6000 ",
+                                 QMessageBox::Ok);
+        break;
+    case 2:
+        filename = QFileDialog::getOpenFileName(this, tr("opening"), "/home", "All files(*)");
+        g_print("%s \n", filename.toUtf8().constData());
+        break;
+    case 3:
 
+        break;
+    default:
+        this->framerate = 25;
+        break;
+    }
+
+}
+
+void inputBox::on_checkBox_clicked(bool checked)
+{
+    if(checked)
+    {
+        QDir DevDir("/dev","video*",QDir::Name,QDir::System);
+        ui->LocalCamera->addItems(DevDir.entryList());
+       QFile file("/proc/asound/cards");
+       g_print("%s \n", "Sound Cards ------------>");
+       if(file.exists() && file.open(QIODevice::ReadOnly))
+       {
+           QTextStream in(&file);
+           QString line = in.readLine();
+           while(!line.isEmpty()) {
+               QString part1 = line.section("]", 0, 0);
+               QString part2 = part1.section("[", 1, 1);
+               ui->soundCards->addItem(part2);
+               g_print("%s \n", line.toUtf8().constData());
+               line = in.readLine();
+               //fields = line.split(":");
+               //model->appendRow(fields);
+
+           }
+            //ui->soundCards->addItems(fields);
+           file.close();
+       }
+
+    }
+    else
+    {
+
+        ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
+        ui->AudioSRC->addItems(QStringList()<<""<<"tcp"<<"File"<<"the same");
+        ui->LocalCamera->clear();
+        ui->soundCards->clear();
+    }
+
+}
+
+
+
+
+void inputBox::on_LocalCamera_currentIndexChanged(int index)
+{
+    this->localCamera = ui->LocalCamera->currentText();
+    g_print("%s \n", localCamera.toUtf8().constData());
+}
+
+void inputBox::on_soundCards_currentIndexChanged(int index)
+{
+    this->localAudioCard = ui->soundCards->currentText();
+    g_print("%s \n", localAudioCard.toUtf8().constData());
 }
