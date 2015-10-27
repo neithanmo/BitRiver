@@ -20,6 +20,7 @@ inputBox::inputBox(QWidget *parent) :
     ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
     ui->AudioSRC->addItems(QStringList()<<""<<"tcp"<<"File"<<"the same");
     this->setWindowTitle("Streaming Settings");
+    this->isLocal=false;
 
 
 }
@@ -270,8 +271,9 @@ void inputBox::on_checkBox_clicked(bool checked)
 {
     if(checked)
     {
-        QDir DevDir("/dev","video*",QDir::Name,QDir::System);
-        ui->LocalCamera->addItems(DevDir.entryList());
+       this->isLocal = true;
+       QDir DevDir("/dev","video*",QDir::Name,QDir::System);
+       ui->LocalCamera->addItems(DevDir.entryList());
        QFile file("/proc/asound/cards");
        g_print("%s \n", "Sound Cards ------------>");
        if(file.exists() && file.open(QIODevice::ReadOnly))
@@ -295,7 +297,7 @@ void inputBox::on_checkBox_clicked(bool checked)
     }
     else
     {
-
+        this->isLocal = false;
         ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
         ui->AudioSRC->addItems(QStringList()<<""<<"tcp"<<"File"<<"the same");
         ui->LocalCamera->clear();
