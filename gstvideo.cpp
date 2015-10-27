@@ -54,6 +54,9 @@ gstvideo::gstvideo(QWidget *parent) :
                      ui->progressBar3, SLOT(setValue(int)));
     QObject::connect(ui->slider4, SIGNAL(valueChanged(int)),
                      ui->progressBar4, SLOT(setValue(int)));
+    ui->widget->setFixedWidth(640);
+    ui->widget->setFixedHeight(480);
+    gst_init(NULL, FALSE);
     inputBox *input = new inputBox;
     input->exec();
     QString youkey = input->youtube;
@@ -65,7 +68,7 @@ gstvideo::gstvideo(QWidget *parent) :
     int abitrate = input->abrate;
     int vbitrate = input->vbrate;
     //QString resol =
-    delete input;
+    //delete input;
     g_print("youtube key is : %s \n", youkey.toUtf8().constData());
     g_print("video Resolution: %dx%d \n", width, heigth);
     g_print("audio rate is: %d; audio bitrate is: %d \n", audiorate, abitrate);
@@ -73,63 +76,45 @@ gstvideo::gstvideo(QWidget *parent) :
     g_print("audio channels is: %d \n", channels);
     //WId window = ui->widget->winId();
 
-    ui->widget->setFixedWidth(640);
-    ui->widget->setFixedHeight(480);
-    gst_init(NULL, FALSE);
 
-    //##################### video elements ###################################
+//building all elements and BINS
 
-    pipeline = gst_pipeline_new("pipeline");
-    this->Vsrc = gst_element_factory_make("v4l2src", "src");
+    this->Vlocalsrc = gst_element_factory_make("v4l2src", "src");
+    this->Alocalsrc = gst_element_factory_make("alsasrc", "asrc");
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
-    this->sink = gst_element_factory_make("ximagesink", "sink");
-    this->videobalance = gst_element_factory_make("videobalance", "balance");
-    blockpad = gst_element_get_static_pad(this->Vsrc, "src");
-    conv_after = gst_element_factory_make("videoconvert", "conv_after");
-    conv_before = gst_element_factory_make("videoconvert", "conv_before");
-    curr = gst_element_factory_make("identity", "curr");
+    this->conv = gst_element_factory_make("audioconvert","aconv");
+    this->volume = gst_element_factory_make("volume","volume");
     this->x264enc = gst_element_factory_make("x264enc","x264enc");
     this->h264parse = gst_element_factory_make("h264parse","h264parse");
     this->avdec_h264 = gst_element_factory_make("avdec_h264","avdec_h264");
-    //se crearon todos los elementos ????
-
-    if (!this->Vsrc || !this->sink || !this->conversor1 || !pipeline || !this->videobalance || !conv_before || !curr || !conv_after){
-        qDebug("no se crearon todos los elementos de video necesarios");
-        return;
-    }
-
-    //######################################################################
-
-    //##################### audio elements ##################################
-
-    this->audiosrc = gst_element_factory_make("alsasrc", "asrc");
-    this->conv = gst_element_factory_make("audioconvert","aconv");
-    this->volume = gst_element_factory_make("volume","volume");
+    this->sink = gst_element_factory_make("ximagesink", "sink");               //for local view
+    this->videobalance = gst_element_factory_make("videobalance", "balance");
     this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
     this->faac = gst_element_factory_make("faac","faac");
     this->aacparse = gst_element_factory_make("aacparse", "aacparse");
-    this->abin = gst_bin_new("abin");
-    if (!this->audiosrc || !this->conv || !this->abin || !this->volume){
-        qDebug("no se crearon todos los elementos de audio necesarios");
-        return;
-    }
+    this->Afilesrc= gst_element_factory_make("filesrc", "Afilesrc");
+    this->Atcpsrc = gst_element_factory_make("tcpclientsrc", "Atcpsrc");
+    this->Vtcpsrc = gst_element_factory_make("tcpclientsrc", "Vtcpsrc");
+    this->Vfilesrc = gst_element_factory_make("filesrc", "Vtcpsrc");
+    this->queue = gst_element_factory_make("queue", "queue");
+    this->audiosampler = gst_element_factory_make("audioresample", "audiosampler");
+
+
+
+
+    //###### statics elements only for effects #########################################
+    blockpad = gst_element_get_static_pad(this->Vlocalsrc, "src");
+    conv_after = gst_element_factory_make("videoconvert", "conv_after");
+    conv_before = gst_element_factory_make("videoconvert", "conv_before");
+    curr = gst_element_factory_make("identity", "curr");
+    //#################################################################################
+
     g_object_set(this->volume, "volume", 0, NULL);
-    gst_bin_add_many(GST_BIN(this->abin), this->audiosrc, this->conv, this->volume, NULL);
-    gst_element_link_many(this->audiosrc, this->conv, this->volume, NULL);
-    binpad = gst_element_get_static_pad(this->volume, "src");             //ghostpad for my audio bin
-    gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
-    //if(binpad != NULL)qDebug("GHOSTPAD ADDED");
-    gst_object_unref (binpad);
-
-
-    //###########################################################################
-
-    //######################### Varios elementos ################################
-
+    pipeline = gst_pipeline_new("pipeline");
     this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
     this->flvmux = gst_element_factory_make("flvmux","flvmux");
-    this->tcpclientsrc = gst_element_factory_make("tcpclientsrc","tcpclientsrc");
-    this->decodebin = gst_element_factory_make("decodebin","decodebin");
+    //this->tcpclientsrc = gst_element_factory_make("tcpclientsrc","tcpclientsrc");
+    this->decoder = gst_element_factory_make("decodebin","decodebin");
     this->Ltee = gst_element_factory_make("tee","tee");
     this->Vcaps = gst_caps_new_simple("video/x-raw",
                    "width", G_TYPE_INT, 640,
@@ -140,13 +125,120 @@ gstvideo::gstvideo(QWidget *parent) :
                    "height", G_TYPE_INT, heigth,
                     NULL);
 
+    // ########### Checking for errores building the elements ########################################################################
+
+    if (!this->Vlocalsrc || !this->sink || !this->conversor1 || !pipeline || !this->videobalance ||
+            !conv_before || !curr || !conv_after || !Vfilesrc || !Vtcpsrc ){
+        qDebug("no se crearon todos los elementos de video necesarios");
+        return;
+    }
+    if (!this->Alocalsrc || !this->conv || !this->volume || !audiosampler || !Atcpsrc || !Afilesrc || !faac || !aacparse){
+        qDebug("no se crearon todos los elementos de audio necesarios");
+        return;
+    }
+
+    if (!this->aFILEbin || !aTCPbin || !abin || !vFILEbin || !vTCPbin || !vV4L2bin){
+        qDebug("any BINS created - error!! closing");
+        return;
+    }
+
+    if (!this->x264enc || !this->decoder || !this->h264parse || !flvmux || !Ltee || !queue || !rtmp || !Vcaps || !Scaps){
+        qDebug("no se crearon todos los elementos de encodificación necesarios");
+        return;
+    }
+
+    //################################################################################################################################
+
+
+    //########################### BINS ##############################################################################################
+
+    //########################### audio source BINS ###################################################
+
+    this->abin = gst_bin_new("abin");                           //audio local bin
+    gst_bin_add_many(GST_BIN(this->abin), this->Alocalsrc, this->conv, this->volume, NULL);
+    gst_element_link_many(this->Alocalsrc, this->conv, this->volume, NULL);
+    binpad = gst_element_get_static_pad(this->volume, "src");             //ghostpad for my audio bin
+    gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
+
+
+    this->aTCPbin = gst_bin_new("aTCPbin");
+    gst_bin_add_many(GST_BIN(this->aTCPbin), this->Atcpsrc, this->decoder, this->queue, this->conv, this->audiosampler, this->volume, NULL);
+    gst_element_link_many(this->Atcpsrc, this->decoder, this->queue, this->conv, this->audiosampler, this->volume,  NULL);
+    gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("src", binpad));
+
+
+    this->aFILEbin = gst_bin_new("aFILEbin");
+    gst_bin_add_many(GST_BIN(this->aFILEbin), this->Afilesrc, this->decoder, this->queue, this->conv, this->audiosampler, this->volume,  NULL);
+    gst_element_link_many(this->Afilesrc, this->decoder, this->queue, this->conv, this->audiosampler, this->volume,  NULL);
+    gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("src", binpad));
+
+    gst_object_unref(binpad);
+
+    //################################################################################################
+
+    //################################# video source BINS ############################################
+
+    this->vV4L2bin = gst_bin_new("vV4L2bin");
+    gst_bin_add_many(GST_BIN(this->vV4L2bin), this->Vlocalsrc, this->conversor1,
+                     this->videobalance, conv_before, curr, conv_after, NULL);//video local bin
+    gst_element_link_many(this->Vlocalsrc, this->conversor1);
+    gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
+    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
+    GstPad *pad = gst_element_get_static_pad(conv_after, "src");
+    gst_element_add_pad (this->vV4L2bin, gst_ghost_pad_new ("src", pad));
+
+
+    this->vFILEbin = gst_bin_new("vFILEbin");
+    gst_bin_add_many(GST_BIN(this->vFILEbin), this->Vfilesrc, this->decoder, this->queue,  this->conversor1,
+                     this->videobalance, conv_before, curr, conv_after, NULL);
+    gst_element_link_many(this->Vlocalsrc, this->conversor1);
+    gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
+    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
+    gst_element_add_pad (this->vFILEbin, gst_ghost_pad_new ("src", pad));
+
+
+    this->vTCPbin = gst_bin_new("vTCPbin");
+    gst_bin_add_many(GST_BIN(this->vTCPbin), this->Vtcpsrc, this->decoder, this->queue,  this->conversor1,
+                     this->videobalance, conv_before, curr, conv_after, NULL);
+    gst_element_link_many(this->Vlocalsrc, this->conversor1);
+    gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
+    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
+    gst_element_add_pad (this->vTCPbin, gst_ghost_pad_new ("src", pad));
+
+    gst_object_unref(pad);
+
+    if(input->isLocal)
+    {
+     // i will to use the vV4L2bin and abin - into my pipeline
+        //recordar los elementos ue activan sus pad a solicitud (tee - flvmux - etc)
+        gst_bin_add_many(GST_BIN(pipeline), this->Vlocalsrc, this->conversor1, this->videobalance, conv_before,
+                         curr, conv_after, this->sink, abin, this->audiosink, NULL);
+
+
+
+    }
+
+    //#####################################################################################################################
+
+
+
+
+
+
+
+    //###########################################################################
+
+    //######################### Varios elementos ################################
+
+
+
     //###################### Global Pipeline ####################################
 
 
-    gst_bin_add_many(GST_BIN(pipeline), this->Vsrc, this->conversor1, this->videobalance, conv_before,
+    gst_bin_add_many(GST_BIN(pipeline), this->Vlocalsrc, this->conversor1, this->videobalance, conv_before,
                      curr, conv_after, this->sink, abin, this->audiosink, NULL);
     gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
-    gst_element_link_many(this->Vsrc, this->conversor1,NULL);
+    gst_element_link_many(this->Vlocalsrc, this->conversor1,NULL);
     gst_element_link_many(this->videobalance,conv_before, curr, conv_after, this->sink,NULL);
     if(!gst_element_link_many(this->abin, this->audiosink, NULL)){
         qDebug("No se pudo linkear el bin y audio");              //linking the bin ghostpad to de audiosink
