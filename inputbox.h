@@ -23,9 +23,10 @@ public:
     QString youtube;
     int resolutionX, resolutionY;
     int arate, channels,framerate; //audio rate, channels and frame rate for system ettings
-    int vbrate,abrate, videoBIN, audioBIN; //where is the ip of my source or path to a file
+    int vbrate,abrate, videoBIN, audioBIN; //What bin I will to use in my pipeline?
     QString audioPath, videoPath; //Line edith paths, ip and port or file path
     QString localCamera, localAudioCard; //local paths for sound cards and video locall cameras
+    bool isLocal; //isLocal = true ---->> get Local path devices, for videoBIN and audioBIN pipeline
 
 private slots:
     void on_buttonBox_accepted();
