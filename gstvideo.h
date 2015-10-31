@@ -59,8 +59,6 @@ private:
     GstElement *audiosink;
     GstElement *Alocalsrc;
     GstElement *conv;       //audioconvert
-    GstElement *queue1;
-    GstElement *queue2;
     GstElement *audiosampler;
     // ######## Custom Bins ##########################################################################
     GstElement *abin;       //audio bin, para captura de microfono, control de volumen
@@ -76,8 +74,6 @@ private:
     GstElement *faac;
     GstElement *h264parse;
     GstElement *tcpclientsrc;
-    GstElement *vdecoder;
-    GstElement *adecoder;
     GstElement *avdec_h264;
     GstElement *flvmux;
     GstElement *Ltee; //tee for video
@@ -91,9 +87,10 @@ private:
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static gboolean to_block_src(gpointer user_data);
-    static void videoPad_added_handler(GstElement *src, GstPad *new_pad, CustomData *data);
-    static void audioPad_added_handler (GstElement *src, GstPad *new_pad, CustomData *data);
-    int audioSAME;
+    static void videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer user_data);
+    static void audioPad_added_handler (GstElement *src, GstPad *new_pad, gpointer user_data);
+
+
     //void avolume(gint);
     //int effect;
     // BIN V4L2 SOURCE/##################################
