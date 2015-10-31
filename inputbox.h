@@ -9,7 +9,8 @@
 #include <glib.h>
 #include <gst/gst.h>
 #include <stdio.h>
-static int VBIN;
+
+
 namespace Ui {
 class inputBox;
 }
@@ -21,13 +22,14 @@ class inputBox : public QDialog
 public:
     explicit inputBox(QWidget *parent = 0);
     ~inputBox();
-    QString youtube;
-    int resolutionX, resolutionY;
+    bool isLocal; //isLocal = true ---->> get Local path devices, for videoBIN and audioBIN pipeline
+    int VBIN;
     int arate, channels,framerate; //audio rate, channels and frame rate for system ettings
+    int resolutionX, resolutionY;
     int vbrate,abrate, videoBIN, audioBIN; //What bin I will to use in my pipeline?
+    QString youtube;
     QString audioPath, videoPath; //Line edith paths, ip and port or file path
     QString localCamera, localAudioCard; //local paths for sound cards and video locall cameras
-    bool isLocal; //isLocal = true ---->> get Local path devices, for videoBIN and audioBIN pipeline
 
 private slots:
     void on_buttonBox_accepted();
