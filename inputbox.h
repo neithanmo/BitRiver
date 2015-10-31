@@ -9,6 +9,7 @@
 #include <glib.h>
 #include <gst/gst.h>
 #include <stdio.h>
+static int VBIN;
 namespace Ui {
 class inputBox;
 }
