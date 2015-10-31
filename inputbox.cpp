@@ -218,7 +218,7 @@ void inputBox::on_Framerate_currentIndexChanged(int index)
 void inputBox::on_VideoSRC_currentIndexChanged(int index)
 {
     //""<<"tcp"<<"File"
-    this->videoBIN=index;
+    VBIN=index;
     QString filename;
     switch (index){
     case 0:
