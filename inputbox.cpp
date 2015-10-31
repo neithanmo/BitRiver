@@ -33,10 +33,10 @@ inputBox::~inputBox()
 
 void inputBox::on_buttonBox_accepted()
 {
-    this->youtube=ui->youtubeLine->text();
+    youtube=ui->youtubeLine->text();
     //this->abrate=ui->abitrate->
-    this->audioPath=ui->AudioPath->text();
-    this->videoPath=ui->VideoPath->text();
+    audioPath=ui->AudioPath->text();
+    videoPath=ui->VideoPath->text();
 
 }
 
@@ -78,22 +78,22 @@ void inputBox::on_Audiorate_currentIndexChanged(int index)
     //"8 kHz"<<"16 kHz"<<"22.05 kHz"<<"44.1 kHz"<<"48 kHz"<<"96 kHz");
     switch (index){
     case 0:
-        this->arate = 16000;
+        arate = 16000;
         break;
     case 1:
-        this->arate = 22050;
+        arate = 22050;
         break;
     case 2:
-        this->arate = 44100;
+        arate = 44100;
         break;
     case 3:
-        this->arate = 48000;
+        arate = 48000;
         break;
     case 4:
-        this->arate = 96000;
+        arate = 96000;
         break;
     default:
-        this->arate = 44100;
+        arate = 44100;
         break;
     }
 
@@ -105,31 +105,31 @@ void inputBox::on_Channels_currentIndexChanged(int index)
     //"1"<<"2"<<"3"<<"4"<<"5"<<"6"<<"7"<<"8"
     switch (index){
     case 0:
-        this->channels = 1;
+        channels = 1;
         break;
     case 1:
-        this->channels = 2;
+        channels = 2;
         break;
     case 2:
-        this->channels = 3;
+        channels = 3;
         break;
     case 3:
-        this->channels = 4;
+        channels = 4;
         break;
     case 4:
-        this->channels = 5;
+        channels = 5;
         break;
     case 5:
-        this->channels = 6;
+        channels = 6;
         break;
     case 6:
-        this->channels = 7;
+        channels = 7;
         break;
     case 7:
-        this->channels = 8;
+        channels = 8;
         break;
     default:
-        this->channels = 2;
+        channels = 2;
         break;
     }
 
@@ -141,31 +141,31 @@ void inputBox::on_VideoBitRate_currentIndexChanged(int index)
     //<<"8 Mbit/s"<<"10 Mbit/s"<<"20 Mbit/s"
     switch (index){
     case 0:
-        this->vbrate = 1000;
+        vbrate = 1000;
         break;
     case 1:
-        this->vbrate = 1115;
+        vbrate = 1115;
         break;
     case 2:
-        this->vbrate = 2500;
+        vbrate = 2500;
         break;
     case 3:
-        this->vbrate = 4000;
+        vbrate = 4000;
         break;
     case 4:
-        this->vbrate = 8000;
+        vbrate = 8000;
         break;
     case 5:
-        this->vbrate = 10000;
+        vbrate = 10000;
         break;
     case 6:
-        this->vbrate = 15000;
+        vbrate = 15000;
         break;
     case 7:
-        this->vbrate = 2000;
+        vbrate = 2000;
         break;
     default:
-        this->vbrate = 4000;
+        vbrate = 4000;
         break;
     }
 
@@ -176,16 +176,16 @@ void inputBox::on_AudioBitRate_currentIndexChanged(int index)
     //"128 kbps"<<"256 kbps"<<"320 kbps"
     switch (index){
     case 0:
-        this->abrate = 128000;
+        abrate = 128000;
         break;
     case 1:
-        this->abrate = 256000;
+        abrate = 256000;
         break;
     case 2:
-        this->abrate = 320000;
+        abrate = 320000;
         break;
     default:
-        this->abrate = 128000;
+        abrate = 128000;
         break;
     }
 
@@ -197,19 +197,19 @@ void inputBox::on_Framerate_currentIndexChanged(int index)
     //"20"<<"25"<<"30"<<"60"
     switch (index){
     case 0:
-        this->framerate = 20;
+        framerate = 20;
         break;
     case 1:
-        this->framerate = 25;
+        framerate = 25;
         break;
     case 2:
-        this->framerate = 30;
+        framerate = 30;
         break;
     case 3:
-        this->framerate = 60;
+        framerate = 60;
         break;
     default:
-        this->framerate = 25;
+        framerate = 25;
         break;
     }
 
@@ -242,7 +242,7 @@ void inputBox::on_VideoSRC_currentIndexChanged(int index)
 void inputBox::on_AudioSRC_currentIndexChanged(int index)
 {
     //"microfono"<<"tcp"<<"File"<<"same Videosrc"
-    this->audioBIN = index;
+    audioBIN = index;
      QString filename;
     switch (index){
     case 0:
@@ -261,7 +261,7 @@ void inputBox::on_AudioSRC_currentIndexChanged(int index)
 
         break;
     default:
-        this->framerate = 25;
+        //this->framerate = 25;
         break;
     }
 
@@ -271,7 +271,7 @@ void inputBox::on_checkBox_clicked(bool checked)
 {
     if(checked)
     {
-       this->isLocal = true;
+       isLocal = true;
        QDir DevDir("/dev","video*",QDir::Name,QDir::System);
        ui->LocalCamera->addItems(DevDir.entryList());
        QFile file("/proc/asound/cards");
@@ -297,7 +297,7 @@ void inputBox::on_checkBox_clicked(bool checked)
     }
     else
     {
-        this->isLocal = false;
+        isLocal = false;
         ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
         ui->AudioSRC->addItems(QStringList()<<""<<"tcp"<<"File"<<"the same");
         ui->LocalCamera->clear();
@@ -311,12 +311,12 @@ void inputBox::on_checkBox_clicked(bool checked)
 
 void inputBox::on_LocalCamera_currentIndexChanged(int index)
 {
-    this->localCamera = ui->LocalCamera->currentText();
+    localCamera = ui->LocalCamera->currentText();
     g_print("%s \n", localCamera.toUtf8().constData());
 }
 
 void inputBox::on_soundCards_currentIndexChanged(int index)
 {
-    this->localAudioCard = ui->soundCards->currentText();
+    localAudioCard = ui->soundCards->currentText();
     g_print("%s \n", localAudioCard.toUtf8().constData());
 }
