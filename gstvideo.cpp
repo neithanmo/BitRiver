@@ -71,7 +71,7 @@ gstvideo::gstvideo(QWidget *parent) :
     int audiorate = input->arate;
     int channels = input->channels;
     int abitrate = input->abrate;
-    int vbitrate = input->vbrate;
+     int vbitrate = input->vbrate;
     audioSAME = input->audioBIN;
     //QString resol =
     //delete input;
@@ -106,6 +106,8 @@ gstvideo::gstvideo(QWidget *parent) :
     this->audiosampler = gst_element_factory_make("audioresample", "audiosampler");
     queue2 = gst_element_factory_make("queue", "queue");
     this->Ltee2 = gst_element_factory_make("tee","tee");
+    int keyint = 2*framerate;
+    g_print("%d\n", vbitrate);
 
 
 
@@ -118,6 +120,12 @@ gstvideo::gstvideo(QWidget *parent) :
     //#################################################################################
 
     g_object_set(this->volume, "volume", 0, NULL);
+    g_object_set(this->faac, "bitrate", abitrate, NULL);
+    g_object_set(this->x264enc, "bitrate", vbitrate, "key-int-max", keyint, "bframes", 0, "byte-stream", false, "aud", true, "tune", "zerolatency",
+                 "threads", 0, "speed-preset", 2);
+
+   // "x264enc bitrate=$vbitrate key-int-max=$keyint bframes=$h264_bframes byte-stream=false aud=true tune=zerolatency"
+
     pipeline = gst_pipeline_new("pipeline");
     this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
     this->flvmux = gst_element_factory_make("flvmux","flvmux");
@@ -133,6 +141,8 @@ gstvideo::gstvideo(QWidget *parent) :
                    "height", G_TYPE_INT, heigth,
                    NULL);
     this->Acaps = gst_caps_new_simple("audio/x-raw",
+                                      "format", G_TYPE_STRING, "S16LE",
+                                      "layout", G_TYPE_STRING, "interleaved",
                    NULL);
 
 
@@ -241,12 +251,6 @@ gstvideo::gstvideo(QWidget *parent) :
 
 
 
-
-
-
-
-    //#############################################################################
-
     window = ui->widget->winId();
 
     cam_window_handle=window;
@@ -264,7 +268,6 @@ gstvideo::gstvideo(QWidget *parent) :
     g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), NULL);
     g_signal_connect(adecoder, "pad-added", G_CALLBACK(audioPad_added_handler), NULL);
     //connect(ui->pushButton,SIGNAL(clicked()), this, SLOT() )
-
 }
 
 //destructor
@@ -286,8 +289,6 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gp
     GstVideoOverlay *overlay;
     overlay = GST_VIDEO_OVERLAY (GST_MESSAGE_SRC (message));
     gst_video_overlay_set_window_handle (overlay, cam_window_handle);
-    g_print("solicitando ventana \ n");
-
     gst_message_unref (message);
     return GST_BUS_DROP;
 }
@@ -333,7 +334,6 @@ GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gpoint
 
     GstPad *srcpad, *sinkpad;
     //GST_DEBUG_OBJECT(pad, "blocking pad now");
-    g_print("%s \n", "blocking pad now");
     /*procedo a remover el probe, debido a que instalare un nuevo probe, ademas ya el
      * blockpad esta bloqueado*/
 
@@ -342,7 +342,6 @@ GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gpoint
     srcpad = gst_element_get_static_pad (curr, "src");
     gst_pad_add_probe(srcpad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, (GstPadProbeCallback)event_eos, user_data, NULL);
     gst_object_unref (srcpad);
-    g_print("%s \n", "installing EOS probe");
 
     /* push EOS into the element, the probe will be fired when the
      * EOS leaves the effect and it has thus drained all of its data */
