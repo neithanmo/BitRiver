@@ -13,6 +13,7 @@
 #include <gst/audio/streamvolume.h>
 #include "ui_gstvideo.h"
 #include "inputbox.h"
+#include <string>
 
 
 namespace Ui {
@@ -45,8 +46,8 @@ private:
     GstCaps *Vcaps; //filtro para visualizar el stream a 640x480
     GstCaps *Scaps; //resolucion del streaming, la resolucion es definida por el usuario
     GstCaps *Acaps;
-    GstCaps *enAcaps;
-    GstCaps *enVcaps;
+    GstCaps *enAcaps; //audio encoding output format
+    GstCaps *enVcaps;//video encoding output format
     GstElement *Vlocalsrc;
     GstElement *Vtcpsrc; //tcp videosource;
     GstElement *Vfilesrc;
@@ -81,6 +82,8 @@ private:
     GstElement *rtmp;
     GstBus *bus;
     GMainLoop *loop;
+    QString videopath, audiopath;
+    int videoBIN;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
     static guintptr cam_window_handle;
     void update_color_channel (gchar*, gint, GstColorBalance*);
