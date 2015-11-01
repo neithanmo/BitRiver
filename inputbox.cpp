@@ -11,7 +11,7 @@ inputBox::inputBox(QWidget *parent) :
                             <<"480p"<<"720p"<<"1080p"); //resolutions accepted by youtube servers
     //QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
                      //ui->progressBar1, SLOT(setValue(int)));
-    ui->Channels->addItems(QStringList()<<"1"<<"2"<<"3"<<"4"<<"5"<<"6"<<"7"<<"8");
+    ui->Channels->addItems(QStringList()<<"1"<<"2");
     ui->Audiorate->addItems(QStringList()<<"16 kHz"<<"22.05 kHz"<<"44.1 kHz"<<"48 kHz"<<"96 kHz");
     ui->Framerate->addItems(QStringList()<<"20"<<"25"<<"30"<<"60");
     ui->AudioBitRate->addItems(QStringList()<<"128 kbps"<<"256 kbps"<<"320 kbps");
@@ -110,24 +110,6 @@ void inputBox::on_Channels_currentIndexChanged(int index)
     case 1:
         channels = 2;
         break;
-    case 2:
-        channels = 3;
-        break;
-    case 3:
-        channels = 4;
-        break;
-    case 4:
-        channels = 5;
-        break;
-    case 5:
-        channels = 6;
-        break;
-    case 6:
-        channels = 7;
-        break;
-    case 7:
-        channels = 8;
-        break;
     default:
         channels = 2;
         break;
@@ -162,7 +144,7 @@ void inputBox::on_VideoBitRate_currentIndexChanged(int index)
         vbrate = 15000;
         break;
     case 7:
-        vbrate = 2000;
+        vbrate = 20000;
         break;
     default:
         vbrate = 4000;
@@ -218,7 +200,7 @@ void inputBox::on_Framerate_currentIndexChanged(int index)
 void inputBox::on_VideoSRC_currentIndexChanged(int index)
 {
     //""<<"tcp"<<"File"
-    VBIN=index;
+    videoBIN=index;
     QString filename;
     switch (index){
     case 0:
@@ -230,7 +212,9 @@ void inputBox::on_VideoSRC_currentIndexChanged(int index)
                                  QMessageBox::Ok);
         break;
     case 2:
-        filename = QFileDialog::getOpenFileName(this, tr("opening"), "/home", "All files(*)");
+        filename = QFileDialog::getOpenFileName(this, tr("opening"), "/home",
+                       "Video files(*.mp4);;(*.avi);;(*.flv);; (*.mkv)");
+        videoPath = filename;
         g_print("%s \n", filename.toUtf8().constData());
         break;
     default:
@@ -241,7 +225,7 @@ void inputBox::on_VideoSRC_currentIndexChanged(int index)
 
 void inputBox::on_AudioSRC_currentIndexChanged(int index)
 {
-    //"microfono"<<"tcp"<<"File"<<"same Videosrc"
+    //"tcp"<<"File"<<"same Videosrc"
     audioBIN = index;
      QString filename;
     switch (index){
@@ -254,10 +238,10 @@ void inputBox::on_AudioSRC_currentIndexChanged(int index)
                                  QMessageBox::Ok);
         break;
     case 2:
-        filename = QFileDialog::getOpenFileName(this, tr("opening"), "/home", "All files(*)");
+        filename = QFileDialog::getOpenFileName(this, tr("opening"), "/home", "All files(*.mp3);; (*.mp4);;(*.flv)");
         g_print("%s \n", filename.toUtf8().constData());
         break;
-    case 3:
+    case 3://the same
 
         break;
     default:
