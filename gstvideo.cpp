@@ -14,7 +14,6 @@ static GstElement *queue2;
 static int audioSAME;
 static GstElement *vdecoder;
 static GstElement *adecoder;
-//static GstElement *volume;
 static int effect=0;
 
 //constructor, inicializo el gui, conecto los objetos, inicializo gstreamer,
@@ -23,6 +22,7 @@ gstvideo::gstvideo(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::gstvideo)
 {
+
     ui->setupUi(this);
     ui->slider1->setRange(-100,100);//contraste 0 -> 2. default=1
     ui->slider1->setTickPosition(QSlider::TicksAbove);
@@ -62,20 +62,14 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->widget->setFixedWidth(640);
     ui->widget->setFixedHeight(480);
     gst_init(NULL, FALSE);
-    inputBox *input = new inputBox;
     input->exec();
-    QString youkey = input->youtube;
-    int width = input->resolutionX;
-    int heigth = input->resolutionY;
-    int framerate = input->framerate;
-    int audiorate = input->arate;
-    int channels = input->channels;
-    int abitrate = input->abrate;
-     int vbitrate = input->vbrate;
-    audioSAME = input->audioBIN;
-    this->videopath = input->videoPath;
     this->audiopath = input->audioPath;
     this->videoBIN = input->videoBIN;
+    audioSAME = input->audioBIN;
+    this->isLocal = input->local;
+    path = input->videoPath;
+    apath = input->audioPath;
+    g_print("aqui esta el path : %s \n", path.toUtf8().constData());
     g_print("youtube key is : %s \n", youkey.toUtf8().constData());
     g_print("video Resolution: %dx%d \n", width, heigth);
     g_print("audio rate is: %d; audio bitrate is: %d \n", audiorate, abitrate);
@@ -129,9 +123,13 @@ gstvideo::gstvideo(QWidget *parent) :
     g_object_set(this->faac, "bitrate", abitrate, NULL);
     g_object_set(this->x264enc, "bitrate", vbitrate, "key-int-max", keyint, "bframes", 0, "byte-stream", false, "aud", true, "tune", 2,
                  "threads", 0, "speed-preset", 2, NULL);
-    const std::string path = this->videopath.toUtf8().constData();
-    g_object_set(this->Vfilesrc, "location", "hola.mp4", NULL);
-    g_object_set(this->Afilesrc, "location", this->audiopath.toUtf8().constData(), NULL);
+    //const std::string path = this->videopath.toUtf8().constData();
+    //printf("Input the number for %s =", qr_naziv[i].c_str());
+    //g_print("aqui esta el path : %s \n", videoPath.toUtf8().constData());
+
+
+    g_object_set(this->Vfilesrc, "location", path.toUtf8().constData(), NULL);
+    g_object_set(this->Afilesrc, "location", apath.toUtf8().constData(), NULL);
 
    // "x264enc bitrate=$vbitrate key-int-max=$keyint bframes=$h264_bframes byte-stream=false aud=true tune=zerolatency"
 
@@ -239,7 +237,7 @@ gstvideo::gstvideo(QWidget *parent) :
     GstPad *pad = gst_element_get_static_pad(this->videobalance, "src");    //using them for ghost pads in my bins
     GstPad *pada = gst_element_get_static_pad(this->conv, "sink");
 
-    if(input->isLocal)
+    if(input->local)
     {
      // i will to use the vV4L2bin and abin - into my pipeline
         //recordar los elementos ue activan sus pad a solicitud (tee - flvmux - etc)
@@ -263,34 +261,30 @@ gstvideo::gstvideo(QWidget *parent) :
     }
     else
     {
-        if(audioSAME==3)//the source is the same for audio and video, share decoder
+        if(audioSAME == 3)//the source is the same for audio and video, share decoder
         {
             qDebug("construyendo pipeline para audio y video misma fuente ================>");
             g_print("seleccionando: %d \n", this->videoBIN);
             switch (this->videoBIN){
+
             case 1://tcp input source
 
-                blockpad = gst_element_get_static_pad(this->Vtcpsrc, "src");
-
-                gst_bin_add_many(GST_BIN(this->vTCPbin), this->Vtcpsrc, vdecoder, queue1,  this->conversor1,
-                                 this->videobalance, NULL);
-                gst_element_link_many(this->Vfilesrc, vdecoder, NULL);
-                gst_element_link_many(queue1, this->conversor1, NULL);
-                gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
-                gst_element_add_pad (this->vTCPbin, gst_ghost_pad_new ("src", pad));
-
+                blockpad = gst_element_get_static_pad(queue1, "src");
                 gst_bin_add_many(GST_BIN(this->aTCPbin), this->conv, this->audiosampler, this->volume, NULL);
                 //adecoder->queue2 linked after, we need a callback and padd-added signal
                 gst_element_link_many(this->conv, this->audiosampler, this->volume,  NULL);
 
-                gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("src", binpad));
+                gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("src", binpad));//source pad of my Audio BIN
 
-                gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("sink", pada));
-                //sink pad of the bin for linking it with padd-added callback
+                gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("sink", pada));//sink pad of my aBIN
 
-
-                gst_bin_add_many(GST_BIN(pipeline), this->vTCPbin, conv_before, curr, conv_after, this->sink, queue2, this->aTCPbin, this->audiosink, NULL);
-                gst_element_link_many(this->vTCPbin,conv_before, curr, conv_after,this->sink,  NULL);
+                gst_bin_add_many(GST_BIN(pipeline), this->Vtcpsrc, vdecoder, queue1,  this->conversor1,
+                                 this->videobalance, conv_before, curr, conv_after, this->sink, queue2,
+                                 this->aTCPbin, this->audiosink, NULL);
+                gst_element_link_many(this->Vtcpsrc, vdecoder, NULL); //vdecoder and queue1 will linking in callback function
+                gst_element_link_many(queue1, this->conversor1, this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
+                //gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
+                //gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink,  NULL);
                 gst_element_link_many(queue2, this->aTCPbin, this->audiosink, NULL);
 
                 gst_object_unref(binpad);
@@ -310,6 +304,8 @@ gstvideo::gstvideo(QWidget *parent) :
                 gst_element_link_many(queue1, this->conversor1, NULL);
                 gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
                 gst_element_add_pad (this->vFILEbin, gst_ghost_pad_new ("src", pad));*/
+
+                blockpad = gst_element_get_static_pad(queue1, "src");
 
                 gst_bin_add_many(GST_BIN(this->aFILEbin), this->conv, this->audiosampler, this->volume, NULL);
                 //adecoder->queue2 linked after, we need a callback and padd-added signal
@@ -351,11 +347,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
                 break;
             }
-
         }
-
-
-
     }
 
     //#####################################################################################################################
@@ -374,6 +366,7 @@ gstvideo::gstvideo(QWidget *parent) :
     connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(avolume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
+    //connect(input->Video, SIGNAL(ui->), this, SLOT(videoPath(int)));
     g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), NULL);
     g_signal_connect(adecoder, "pad-added", G_CALLBACK(audioPad_added_handler), NULL);
     //connect(ui->pushButton,SIGNAL(clicked()), this, SLOT() )
@@ -467,102 +460,91 @@ GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gpoint
 
 GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpointer user_data)
 {
-  GstElement *next;
 
   if (GST_EVENT_TYPE (GST_PAD_PROBE_INFO_DATA (info)) != GST_EVENT_EOS)
     return GST_PAD_PROBE_OK;
   gst_pad_remove_probe (pad, GST_PAD_PROBE_INFO_ID (info));
+  gst_element_set_state (curr, GST_STATE_NULL);
+  gst_bin_remove (GST_BIN (pipeline), curr);
+
   switch (effect){
   case 0:
-      next = gst_element_factory_make("identity", "next");
+      curr = gst_element_factory_make("identity", "next");
       break;
   case 1:
-      next = gst_element_factory_make("dicetv", "next");
+      curr = gst_element_factory_make("dicetv", "next");
       break;
   case 2:
-      next = gst_element_factory_make("warptv", "next");
+      curr = gst_element_factory_make("warptv", "next");
       break;
   case 3:
-      next = gst_element_factory_make("shagadelictv", "next");
+      curr = gst_element_factory_make("shagadelictv", "next");
       break;
   case 4:
-      next = gst_element_factory_make("revtv", "next");
+      curr = gst_element_factory_make("revtv", "next");
       break;
   case 5:
-      next = gst_element_factory_make("radioactv", "next");
+      curr = gst_element_factory_make("radioactv", "next");
       break;
   case 6:
-      next = gst_element_factory_make("rippletv", "next");
+      curr = gst_element_factory_make("rippletv", "next");
       break;
   case 7:
-      next = gst_element_factory_make("frei0r-filter-tehroxx0r", "next");
+      curr = gst_element_factory_make("frei0r-filter-tehroxx0r", "next");
       break;
   case 8:
-      next = gst_element_factory_make("frei0r-filter-cartoon", "next");
+      curr = gst_element_factory_make("frei0r-filter-cartoon", "next");
       break;
   case 9:
-      next = gst_element_factory_make("frei0r-filter-invert0r", "next");
+      curr = gst_element_factory_make("frei0r-filter-invert0r", "next");
       break;
   case 10:
-      next = gst_element_factory_make("frei0r-filter-pixeliz0r", "next");
+      curr = gst_element_factory_make("frei0r-filter-pixeliz0r", "next");
       break;
   case 11:
-      next = gst_element_factory_make("frei0r-filter-nervous", "next");
+      curr = gst_element_factory_make("frei0r-filter-nervous", "next");
       break;
   case 12:
-      next = gst_element_factory_make("frei0r-filter-vertigo", "next");
+      curr = gst_element_factory_make("frei0r-filter-vertigo", "next");
       break;
   case 13:
-      next = gst_element_factory_make("frei0r-filter-color-distance", "next");
+      curr = gst_element_factory_make("frei0r-filter-color-distance", "next");
       break;
   case 14:
-      next = gst_element_factory_make("frei0r-filter-perspective", "next");
-      g_object_set(next, "top-left-x", 0.8, "top-left-Y", 0.01, "top-right-x",0.01, "top-right-Y",0.03490 ,  NULL);
+      curr = gst_element_factory_make("frei0r-filter-perspective", "next");
+      g_object_set(curr, "top-left-x", 0.8, "top-left-Y", 0.01, "top-right-x",0.01, "top-right-Y",0.03490 ,  NULL);
       break;
   case 15:
-      next = gst_element_factory_make("frei0r-filter-b", "next");
+      curr = gst_element_factory_make("frei0r-filter-b", "next");
       break;
   case 16:
-      next = gst_element_factory_make("frei0r-filter-baltan", "next");
+      curr = gst_element_factory_make("frei0r-filter-baltan", "next");
       break;
   case 17:
-      next = gst_element_factory_make("frei0r-filter-twolay0r", "next");
+      curr = gst_element_factory_make("frei0r-filter-twolay0r", "next");
       break;
   case 18:
-      next = gst_element_factory_make("frei0r-filter-threelay0r", "next");
+      curr = gst_element_factory_make("frei0r-filter-threelay0r", "next");
       break;
   case 19:
-      next = gst_element_factory_make("frei0r-filter-bw0r", "next");
+      curr = gst_element_factory_make("frei0r-filter-bw0r", "next");
       break;
   case 20:
-      next = gst_element_factory_make("frei0r-filter-sobel", "next");
+      curr = gst_element_factory_make("frei0r-filter-sobel", "next");
       break;
   case 21:
-      next = gst_element_factory_make("frei0r-filter-distort0r", "next");
+      curr = gst_element_factory_make("frei0r-filter-distort0r", "next");
       break;
   default:
-      next = gst_element_factory_make("identity", "next");
+      curr = gst_element_factory_make("identity", "next");
       break;
     }
 
+  gst_bin_add (GST_BIN (pipeline), curr);
+  gst_element_link_many (conv_before, curr, conv_after, NULL);
+  gst_element_set_state (curr, GST_STATE_PLAYING);
 
-
-  if(next==NULL){
-      g_print("%s \n","error, no se puedo crear el elemento");
-      g_print("%s \n","setting default effect: identity");
-      next = gst_element_factory_make("identity", "next");
-  }
-
-  gst_element_set_state (curr, GST_STATE_NULL);
-
-  gst_bin_remove (GST_BIN (pipeline), curr);
-  gst_bin_add (GST_BIN (pipeline), next);
-  gst_element_link_many (conv_before, next, conv_after, NULL);
-  gst_element_set_state (next, GST_STATE_PLAYING);
-
-  curr = next;
-  GST_DEBUG_OBJECT (pipeline, "done");
-
+  //curr = next;
   return GST_PAD_PROBE_DROP;
 }
 
@@ -597,7 +579,7 @@ void gstvideo::videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer
   new_pad_caps = gst_pad_get_current_caps(new_pad);
   new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
   new_pad_type = gst_structure_get_name (new_pad_struct);
-  g_print("audioSAME is: %d  \n", audioSAME);
+  //g_print("audioSAME is: %d  \n", audioSAME);
 
   if ((g_str_has_prefix (new_pad_type, "audio/x-raw")) && (audioSAME == 3) ) {
 
@@ -611,7 +593,6 @@ void gstvideo::videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer
 
   } else if (g_str_has_prefix (new_pad_type, "video/x-raw")) {
      /* Attempt the link */
-    blockpad = new_pad; // source pad to blocking in effects call back
     ret = gst_pad_link (new_pad, sink_pad_video);
     if (GST_PAD_LINK_FAILED (ret)) {
       g_print ("  Type is '%s' but link failed.\n", new_pad_type);
@@ -740,5 +721,4 @@ void gstvideo::avolume(int y){
     g_print("%d \n", x);
     gst_stream_volume_set_volume (GST_STREAM_VOLUME(this->volume), GST_STREAM_VOLUME_FORMAT_LINEAR, x);
 }
-
 
