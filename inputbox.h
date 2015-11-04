@@ -9,6 +9,10 @@
 #include <glib.h>
 #include <gst/gst.h>
 #include <stdio.h>
+#include <QDebug>
+
+static QString path;
+static QString apath;
 
 
 namespace Ui {
@@ -22,7 +26,7 @@ class inputBox : public QDialog
 public:
     explicit inputBox(QWidget *parent = 0);
     ~inputBox();
-    bool isLocal; //isLocal = true ---->> get Local path devices, for videoBIN and audioBIN pipeline
+    bool local; //isLocal = true ---->> get Local path devices, for videoBIN and audioBIN pipeline
     int VBIN;
     int arate, channels,framerate; //audio rate, channels and frame rate for system ettings
     int resolutionX, resolutionY;
@@ -30,6 +34,7 @@ public:
     QString youtube;
     QString audioPath, videoPath; //Line edith paths, ip and port or file path
     QString localCamera, localAudioCard; //local paths for sound cards and video locall cameras
+    //bool same;
 
 private slots:
     void on_buttonBox_accepted();
