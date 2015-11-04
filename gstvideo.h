@@ -15,7 +15,6 @@
 #include "inputbox.h"
 #include <string>
 
-
 namespace Ui {
 class gstvideo;
 //class gstaudio;
@@ -30,6 +29,7 @@ public:
     gstvideo(QWidget *parent = 0);
     ~gstvideo();
 
+
 private slots:
     void start();
     void stop();
@@ -38,11 +38,12 @@ private slots:
     void hue(int);
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
-    void avolume(int);
+    void avolume(int);    
 
 private:
     Ui::gstvideo *ui;
     WId window;
+    inputBox *input = new inputBox;
     GstCaps *Vcaps; //filtro para visualizar el stream a 640x480
     GstCaps *Scaps; //resolucion del streaming, la resolucion es definida por el usuario
     GstCaps *Acaps;
@@ -82,8 +83,17 @@ private:
     GstElement *rtmp;
     GstBus *bus;
     GMainLoop *loop;
-    QString videopath, audiopath;
+    QString videopath, audiopath, youkey;//path al archivo y key para youtube
     int videoBIN;
+    int width;
+    int heigth;
+    int framerate;
+    int audiorate;
+    int channels;
+    int abitrate;
+    int vbitrate;
+    bool isLocal;
+    bool audioSame;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
     static guintptr cam_window_handle;
     void update_color_channel (gchar*, gint, GstColorBalance*);
