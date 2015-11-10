@@ -11,9 +11,6 @@
 #include <stdio.h>
 #include <QDebug>
 
-static QString path;
-static QString apath;
-
 
 namespace Ui {
 class inputBox;
@@ -33,7 +30,9 @@ public:
     int vbrate,abrate, videoBIN, audioBIN; //What bin I will to use in my pipeline?
     QString youtube;
     QString audioPath, videoPath; //Line edith paths, ip and port or file path
-    QString localCamera, localAudioCard; //local paths for sound cards and video locall cameras
+    QString localCamera, localAudioCard, videotcp, audiotcp; //local paths for sound cards and video locall cameras
+    int aport;
+    int vport;
     //bool same;
 
 private slots:
@@ -61,6 +60,7 @@ private slots:
     void on_LocalCamera_currentIndexChanged(int index);
 
     void on_soundCards_currentIndexChanged(int index);
+
 
 private:
     Ui::inputBox *ui;
