@@ -34,10 +34,13 @@ inputBox::~inputBox()
 
 void inputBox::on_buttonBox_accepted()
 {
-    QString yout=ui->youtubeLine->text();
-    //this->abrate=ui->abitrate->
-    QString audioPath=ui->AudioPath->text();
-    QString videoPath=ui->VideoPath->text();
+    this->youtube=ui->youtubeLine->text();
+    this->videotcp = ui->VideoPath->text().section(":", -2, -2);
+    this->audiotcp = ui->AudioPath->text().section(":", -5, -2);
+    this->vport = ui->VideoPath->text().section(":", -1, -1).toInt();
+    this->aport = ui->AudioPath->text().section(":", -1, -1).toInt();
+    qDebug()<<"path tcp- "<<videotcp;
+
 }
 
 
@@ -218,7 +221,6 @@ void inputBox::on_VideoSRC_currentIndexChanged(int index)
 {
     //""<<"tcp"<<"File"
     videoBIN=index;
-    QString filename;
     switch (index){
     case 0:
          break;
@@ -253,7 +255,6 @@ void inputBox::on_AudioSRC_currentIndexChanged(int index)
         break;
     case 2:
         this->audioPath = QFileDialog::getOpenFileName(this, tr("opening"), "/home", "All files(*.mp3);; (*.mp4);;(*.flv)");
-        g_print("%s \n", filename.toUtf8().constData());
         break;
     case 3://the same
         break;
@@ -314,5 +315,6 @@ void inputBox::on_soundCards_currentIndexChanged(int index)
     QString localAudioCard = ui->soundCards->currentText();
     g_print("%s \n", localAudioCard.toUtf8().constData());
 }
+
 
 
