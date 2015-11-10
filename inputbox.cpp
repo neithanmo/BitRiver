@@ -36,7 +36,7 @@ void inputBox::on_buttonBox_accepted()
 {
     this->youtube=ui->youtubeLine->text();
     this->videotcp = ui->VideoPath->text().section(":", -2, -2);
-    this->audiotcp = ui->AudioPath->text().section(":", -5, -2);
+    this->audiotcp = ui->AudioPath->text().section(":", -2, -2);
     this->vport = ui->VideoPath->text().section(":", -1, -1).toInt();
     this->aport = ui->AudioPath->text().section(":", -1, -1).toInt();
     qDebug()<<"path tcp- "<<videotcp;
