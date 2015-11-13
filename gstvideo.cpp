@@ -75,7 +75,7 @@ gstvideo::gstvideo(QWidget *parent) :
     g_print("youtube key is : %s \n", youkey.toUtf8().constData());
     g_print("video Resolution: %dx%d \n", width, heigth);
     g_print("audio rate is: %d; audio bitrate is: %d \n", audiorate, abitrate);
-    g_print("video settings - framerate: %d, video bitrate: %d \n",framerate, vbitrate);
+    g_print("video settings - framerate: %d, video bitrate: %d \n",input->framerate, vbitrate);
     g_print("audio channels is: %d \n", channels);
     g_print("XXXXX %d \n", this->videoBIN);
     qDebug()<<"path to a video is:"<<input->vport;
@@ -492,7 +492,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
 
         }
-    }
+    }//fin else for input->isLocal evaluacion
 
 
 
