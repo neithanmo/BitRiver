@@ -136,14 +136,22 @@ gstvideo::gstvideo(QWidget *parent) :
     vdecoder = gst_element_factory_make("decodebin","vdecodebin");
     adecoder = gst_element_factory_make("decodebin","adecodebin");
     this->Ltee = gst_element_factory_make("tee","tee");
+
+    //video/x-raw, format=BGRA, pixel-aspect-ratio=1/1, interlace-mode=progressive, width=640, height=480
     this->Vcaps = gst_caps_new_simple("video/x-raw",
-                   "width", G_TYPE_INT, 640,
-                   "height", G_TYPE_INT, 480,
-                    NULL);
+                                      "format", G_TYPE_STRING, "BGRA",
+                                      //"framerate", GST_TYPE_FRACTION, 25, 1,
+                                      "interlace-mode", G_TYPE_STRING, "progressive",
+                                      "width", G_TYPE_INT, 640,
+                                      "height", G_TYPE_INT, 480,
+                                       NULL);
     this->Scaps = gst_caps_new_simple("video/x-raw",
-                   "width", G_TYPE_INT, 640,
-                   "height", G_TYPE_INT, 480,
-                   NULL);
+                                      "format", G_TYPE_STRING, "BGRA",
+                                      //"framerate", GST_TYPE_FRACTION, 25, 1,
+                                      "interlace-mode", G_TYPE_STRING, "progressive",
+                                      "width", G_TYPE_INT, input->resolutionX,
+                                      "height", G_TYPE_INT, input->resolutionY,
+                                       NULL);
     this->Acaps = gst_caps_new_simple("audio/x-raw",
                                       "format", G_TYPE_STRING, "S16LE",
                                       "layout", G_TYPE_STRING, "interleaved",
@@ -177,11 +185,6 @@ gstvideo::gstvideo(QWidget *parent) :
         return;
     }
 
-
-    /* if (!this->aFILEbin || !aTCPbin || !abin || !vFILEbin || !vTCPbin || !vV4L2bin){
-         qDebug("any BINS created - error!! closing");
-         return;
-     } */
 
     //####################################################################################################################################
     binpad = gst_element_get_static_pad(this->volume, "src");               //getting pads for linking
@@ -235,7 +238,10 @@ gstvideo::gstvideo(QWidget *parent) :
                                  this->videobalance, conv_before, curr, conv_after, this->sink, queue2,
                                  this->aTCPbin, this->audiosink, NULL);
                 gst_element_link_many(this->Vtcpsrc, vdecoder, NULL); //vdecoder and queue1 will linking in callback function
-                gst_element_link_many(queue1, this->conversor1, this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
+                gst_element_link_many(queue1, this->conversor1, NULL);
+                //this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
+                gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
+                gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
                 //gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
                 //gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink,  NULL);
                 gst_element_link_many(queue2, this->aTCPbin, this->audiosink, NULL);
@@ -263,9 +269,10 @@ gstvideo::gstvideo(QWidget *parent) :
                                  this->videobalance, conv_before, curr, conv_after, this->sink, queue2,
                                  this->aFILEbin, this->audiosink, NULL);
                 gst_element_link_many(this->Vfilesrc, vdecoder, NULL); //vdecoder and queue1 will linking in callback function
-                gst_element_link_many(queue1, this->conversor1, this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
-                //gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
-                //gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink,  NULL);
+                gst_element_link_many(queue1, this->conversor1, NULL);
+                //this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
+                gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
+                gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
                 gst_element_link_many(queue2, this->aFILEbin, this->audiosink, NULL);
 
                 gst_object_unref(binpad);
