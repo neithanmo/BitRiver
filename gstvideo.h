@@ -85,13 +85,6 @@ private:
     GMainLoop *loop;
     QString videopath, audiopath, youkey;//path al archivo y key para youtube
     int videoBIN;
-    int width;
-    int heigth;
-    int framerate;
-    int audiorate;
-    int channels;
-    int abitrate;
-    int vbitrate;
     bool isLocal;
     bool audioSame;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
