@@ -64,19 +64,15 @@ gstvideo::gstvideo(QWidget *parent) :
     gst_init(NULL, FALSE);
     input->exec();
     this->audiopath = input->audioPath;
-    this->videoBIN = input->videoBIN;
     audioSAME = input->audioBIN;
     this->isLocal = input->local;
-    this->framerate = input->framerate;
-    this->videopath = input->videoPath;
-    this->audiopath = input->audioPath;
     //apath = input->audioPath;
     g_print("aqui esta el path : %s \n", this->videopath.toUtf8().constData());
     g_print("youtube key is : %s \n", youkey.toUtf8().constData());
-    g_print("video Resolution: %dx%d \n", width, heigth);
-    g_print("audio rate is: %d; audio bitrate is: %d \n", audiorate, abitrate);
-    g_print("video settings - framerate: %d, video bitrate: %d \n",input->framerate, vbitrate);
-    g_print("audio channels is: %d \n", channels);
+    g_print("video Resolution: %dx%d \n", input->resolutionX, input->resolutionY);
+    g_print("audio rate is: %d; audio bitrate is: %d \n", input->arate, input->abrate);
+    g_print("video settings - framerate: %d, video bitrate: %d \n",input->framerate, input->vbrate);
+    g_print("audio channels is: %d \n", input->channels);
     g_print("XXXXX %d \n", this->videoBIN);
     qDebug()<<"path to a video is:"<<input->vport;
     //WId window = ui->widget->winId();
@@ -116,9 +112,8 @@ gstvideo::gstvideo(QWidget *parent) :
     this->vTCPbin = gst_bin_new("vTCPbin");
      this->vV4L2bin = gst_bin_new("vV4L2bin");
 
-    int keyint = 2*framerate;
+    int keyint = 2*input->framerate;
     //###### statics elements only for effects #########################################
-
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
     curr = gst_element_factory_make("identity", "curr");
@@ -146,8 +141,8 @@ gstvideo::gstvideo(QWidget *parent) :
                    "height", G_TYPE_INT, 480,
                     NULL);
     this->Scaps = gst_caps_new_simple("video/x-raw",
-                   "width", G_TYPE_INT, width,
-                   "height", G_TYPE_INT, heigth,
+                   "width", G_TYPE_INT, 640,
+                   "height", G_TYPE_INT, 480,
                    NULL);
     this->Acaps = gst_caps_new_simple("audio/x-raw",
                                       "format", G_TYPE_STRING, "S16LE",
@@ -163,52 +158,6 @@ gstvideo::gstvideo(QWidget *parent) :
                    "mpegversion", G_TYPE_INT, 4,
                    "stream-format", G_TYPE_STRING, "raw",
                     NULL);
-
-
-
-
-    //########################### audio source BINS ###################################################
-/*
-
-    gst_bin_add_many(GST_BIN(this->aTCPbin), this->Atcpsrc, adecoder, queue2, this->conv, this->audiosampler, this->volume, NULL);
-    gst_element_link_many(this->Afilesrc, adecoder, NULL); //adecoder->queue2 linked after, we need a callback and padd-added signal
-    gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume,  NULL);
-    gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("src", binpad));
-
-
-
-    gst_bin_add_many(GST_BIN(this->aFILEbin), this->Afilesrc, adecoder, queue2, this->conv, this->audiosampler, this->volume,  NULL);
-    gst_element_link_many(this->Afilesrc, adecoder, NULL);
-    gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume,  NULL);
-    gst_element_add_pad (this->aTCPbin, gst_ghost_pad_new ("src", binpad));
-
-    gst_object_unref(binpad);*/
-
-    //################################################################################################
-
-    //################################# video source BINS ############################################
-/*
-
-
-    gst_bin_add_many(GST_BIN(this->vFILEbin), this->Vfilesrc, vdecoder, queue1,  this->conversor1,
-                     this->videobalance, conv_before, curr, conv_after, NULL);
-    gst_element_link_many(this->Vfilesrc, vdecoder); //link vdecoder with queue1 dinamic
-    gst_element_link_many(queue1,  this->conversor1);
-    gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
-    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, NULL);
-    gst_element_add_pad (this->vFILEbin, gst_ghost_pad_new ("src", pad));
-
-
-
-    gst_bin_add_many(GST_BIN(this->vTCPbin), this->Vtcpsrc, vdecoder, queue1,  this->conversor1,
-                     this->videobalance, conv_before, curr, conv_after, NULL);
-    gst_element_link_many(this->Vfilesrc, vdecoder); //link vdecoder with queue1 dinamic
-    gst_element_link_many(queue1,  this->conversor1);
-    gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
-    gst_element_link_many(this->videobalance,conv_before, curr, conv_after, NULL);
-    gst_element_add_pad (this->vTCPbin, gst_ghost_pad_new ("src", pad));
-
-    gst_object_unref(pad);*/
 
     // ########### Checking for errores building the elements ########################################################################
 
@@ -267,7 +216,7 @@ gstvideo::gstvideo(QWidget *parent) :
         {
             qDebug("la misma fuente para audio y video \n");
 
-            switch (this->videoBIN){
+            switch (input->videoBIN){
 
             case 1://tcp input source
                 qDebug("entering TCP streaming \n");
@@ -481,8 +430,6 @@ gstvideo::gstvideo(QWidget *parent) :
                     gst_object_unref(binpad);
                     gst_object_unref(pad);
                     gst_object_unref(pada);
-
-
                     break;
                 default:
                     break;
