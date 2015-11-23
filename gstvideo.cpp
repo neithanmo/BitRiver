@@ -101,6 +101,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->audiosampler = gst_element_factory_make("audioresample", "audiosampler");
     queue2 = gst_element_factory_make("queue", "queue2");
     this->Ltee2 = gst_element_factory_make("tee","tee1");
+    this->scale = gst_element_factory_make("videoscale","scale");
 
 
     this->abin = gst_bin_new("abin");
@@ -265,13 +266,15 @@ gstvideo::gstvideo(QWidget *parent) :
 
                 gst_element_add_pad (this->aFILEbin, gst_ghost_pad_new ("sink", pada));//sink pad of my aBIN
 
-                gst_bin_add_many(GST_BIN(pipeline), this->Vfilesrc, vdecoder, queue1,  this->conversor1,
+                gst_bin_add_many(GST_BIN(pipeline), this->Vfilesrc, vdecoder, queue1,this->scale, this->conversor1,
                                  this->videobalance, conv_before, curr, conv_after, this->sink, queue2,
                                  this->aFILEbin, this->audiosink, NULL);
                 gst_element_link_many(this->Vfilesrc, vdecoder, NULL); //vdecoder and queue1 will linking in callback function
-                gst_element_link_many(queue1, this->conversor1, NULL);
+                //gst_element_link_many(queue1, this->conversor1, this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
+                //gst_element_link_many(queue1, this->conversor1, NULL);
+                gst_element_link_many(queue1, this->scale, this->conversor1,NULL); //this->videobalance,conv_before, curr, conv_after, NULL);
                 //this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
-                gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
+                gst_element_link_filtered (this->conversor1, this->videobalance, this->Vcaps);
                 gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
                 gst_element_link_many(queue2, this->aFILEbin, this->audiosink, NULL);
 
