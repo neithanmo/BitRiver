@@ -81,6 +81,7 @@ private:
     GstElement *Ltee; //tee for video
     GstElement *Ltee2;//tee for audio
     GstElement *rtmp;
+    GstElement *scale;
     GstBus *bus;
     GMainLoop *loop;
     QString videopath, audiopath, youkey;//path al archivo y key para youtube
