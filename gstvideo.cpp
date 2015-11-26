@@ -11,6 +11,13 @@ static GstElement *conv_after;// = gst_element_factory_make("videoconvert", "con
 static GstPad *binpad; //ghost pad para el "bin"
 static GstElement *queue1;
 static GstElement *queue2;
+static GstElement *queue3;
+static GstElement *queue4;
+static GstElement *queue5;
+static GstElement *queue6;
+static GstElement *queue7;
+static GstElement *queue8;
+static GstElement *queue9;
 static int audioSAME;
 static GstElement *vdecoder;
 static GstElement *adecoder;
@@ -98,9 +105,17 @@ gstvideo::gstvideo(QWidget *parent) :
     this->Vtcpsrc = gst_element_factory_make("tcpclientsrc", "Vtcpsrc");
     this->Vfilesrc = gst_element_factory_make("filesrc", "Vtcpsrc");
     queue1 = gst_element_factory_make("queue", "queue1");
+    queue3 = gst_element_factory_make("queue", "queue3");
+    queue4 = gst_element_factory_make("queue", "queue4");
+    queue5 = gst_element_factory_make("queue", "queue5");
+    queue6 = gst_element_factory_make("queue", "queue6");
+    queue7 = gst_element_factory_make("queue", "queue7");
+    queue8 = gst_element_factory_make("queue", "queue8");
+    queue9 = gst_element_factory_make("queue", "queue9");
     this->audiosampler = gst_element_factory_make("audioresample", "audiosampler");
     queue2 = gst_element_factory_make("queue", "queue2");
-    this->Ltee2 = gst_element_factory_make("tee","tee1");
+    this->Ltee2 = gst_element_factory_make("tee","tee2");//audio branch tee for visualization
+    this->Ltee1 = gst_element_factory_make("tee","tee1");//video branch tee for visualization
     this->scale = gst_element_factory_make("videoscale","scale");//for re scale video output for local visulacization
 
 
@@ -205,13 +220,61 @@ gstvideo::gstvideo(QWidget *parent) :
         gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
         gst_bin_add_many(GST_BIN(this->vV4L2bin), this->Vlocalsrc, this->conversor1,
                          this->videobalance, NULL);
-        gst_element_link_many(this->Vlocalsrc, this->conversor1, NULL);
-        gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
+        //gst_element_link_many(this->Vlocalsrc, this->conversor1, this->videobalance, NULL);
+        gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);// Streaming caps
         gst_element_add_pad (this->vV4L2bin, gst_ghost_pad_new ("src", pad));
         gst_object_unref(binpad);
         gst_object_unref(pad);
-        gst_bin_add_many(GST_BIN(pipeline), this->vV4L2bin, conv_before, curr, conv_after, this->sink, this->abin, this->audiosink, NULL);
-        gst_element_link_many(this->vV4L2bin,conv_before, curr, conv_after,this->sink,  NULL);
+        gst_bin_add_many(GST_BIN(pipeline), this->vV4L2bin, conv_before, curr, conv_after,this->Ltee1, queue6, this->sink, queue7,
+                         this->x264enc, this->h264parse, queue3, this->flvmux, queue4, this->rtmp, this->abin, this->Ltee2,
+                         queue8, this->audiosink, queue9, this->faac, this->aacparse, queue5,NULL);
+        gst_element_link_many(this->vV4L2bin,conv_before, curr, conv_after, this->Ltee1, NULL);//tee for video visualization
+                                                                                                //and streaming branch
+        gst_element_link_filtered(queue6, this->sink, this->Vcaps);//dimensionado del video para visualizacion local(640x480)
+        gst_element_link_many(queue7, this->x264enc, this->h264parse, NULL); //queue3 linked with flvmux by requesting
+        gst_element_link_filtered (this->h264parse, queue3, this->enVcaps);
+        gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
+        //****** Linking requesting elements ******************************
+
+        /*FOR TEE1 (VIDEO BRANCHS)#################################################################################*/
+
+        GstPadTemplate *tee_src_pad_template;
+        GstPad *tee1_q6_pad, *tee1_q7_pad;     //video tee requesting
+          GstPad *q6_pad, *q7_pad;
+
+        /* Manually link the Tee, which has "Request" pads */
+        if ( !(tee_src_pad_template = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (tee), "src_%u"))) {
+         gst_object_unref (pipeline);
+         g_critical ("Unable to get pad template");
+         return 0;
+        }
+
+        /* Obtaining request pads for the tee1 elements*/
+        tee1_q6_pad = gst_element_request_pad (this->Ltee1, tee_src_pad_template, NULL, NULL);
+        g_print ("Obtained request pad %s for q6 branch.\n", gst_pad_get_name (tee1_q6_pad));
+        q6_pad = gst_element_get_static_pad (queue6, "sink");
+        /* Link the tee to the queue 6 */
+        if (gst_pad_link (tee1_q6_pad, q6_pad) != GST_PAD_LINK_OK ){
+         g_critical ("Tee for q1 could not be linked.\n");
+         gst_object_unref (pipeline);
+         return 0;
+        } //Tee linked with queue6 for local visualization!!!
+
+
+        tee1_q7_pad = gst_element_request_pad (tee, tee_src_pad_template, NULL, NULL);
+         g_print ("Obtained request pad %s for q2 branch.\n", gst_pad_get_name (tee1_q7_pad));
+         q7_pad = gst_element_get_static_pad (queue7, "sink");
+         /* Link the tee to the queue 7 */
+         if (gst_pad_link (tee1_q7_pad, q7_pad) != GST_PAD_LINK_OK ){
+          g_critical ("Tee for q1 could not be linked.\n");
+          gst_object_unref (pipeline);
+          return 0;
+         }//Tee linked with queue7 for video branch to x264enc!!!
+      /* ###############################################################################################################
+
+
+
+
         gst_element_link_many(this->abin, this->audiosink, NULL);
     }
     else

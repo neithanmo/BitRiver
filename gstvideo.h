@@ -78,7 +78,7 @@ private:
     GstElement *tcpclientsrc;
     GstElement *avdec_h264;
     GstElement *flvmux;
-    GstElement *Ltee; //tee for video
+    GstElement *Ltee1; //tee for video
     GstElement *Ltee2;//tee for audio
     GstElement *rtmp;
     GstElement *scale;
