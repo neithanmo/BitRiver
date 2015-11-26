@@ -101,7 +101,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->audiosampler = gst_element_factory_make("audioresample", "audiosampler");
     queue2 = gst_element_factory_make("queue", "queue2");
     this->Ltee2 = gst_element_factory_make("tee","tee1");
-    this->scale = gst_element_factory_make("videoscale","scale");
+    this->scale = gst_element_factory_make("videoscale","scale");//for re scale video output for local visulacization
 
 
     this->abin = gst_bin_new("abin");
