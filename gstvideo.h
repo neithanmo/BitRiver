@@ -62,6 +62,10 @@ private:
     GstElement *Alocalsrc;
     GstElement *conv;       //audioconvert
     GstElement *audiosampler;
+    GstElement *videosinkconvert;
+    GstElement *videorate;
+    GstElement *audiorate;
+    GstElement *audiosinkconvert;
     // ######## Custom Bins ##########################################################################
     GstElement *abin;       //audio bin, para captura de microfono, control de volumen
                             // tambien se utiliza para el streaming
@@ -94,6 +98,7 @@ private:
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static gboolean to_block_src(gpointer user_data);
+    static void callback(GstBus  *bus, GstMessage *msg, gpointer user_data);
     static void videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer user_data);
     static void audioPad_added_handler (GstElement *src, GstPad *new_pad, gpointer user_data);
 
