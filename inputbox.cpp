@@ -39,15 +39,13 @@ void inputBox::on_buttonBox_accepted()
     this->audiotcp = ui->AudioPath->text().section(":", -2, -2);
     this->vport = ui->VideoPath->text().section(":", -1, -1).toInt();
     this->aport = ui->AudioPath->text().section(":", -1, -1).toInt();
-    qDebug()<<"path tcp- "<<videotcp;
 
 }
 
 
 void inputBox::on_Resolution_currentIndexChanged(int index)
 {
-    //"240p" <<"360p"<<"480p"<<"720p"<<"1080p"
-    //int resolutionX, resolutionY;
+
     switch (index){
     case 0:
         resolutionX = 426;
@@ -74,16 +72,14 @@ void inputBox::on_Resolution_currentIndexChanged(int index)
         resolutionY = 480;
         break;
     }
-    //emit width(resolutionX);
-    //emit heigth(resolutionY);
+
 }
 
 
 
 void inputBox::on_Audiorate_currentIndexChanged(int index)
 {
-    //"8 kHz"<<"16 kHz"<<"22.05 kHz"<<"44.1 kHz"<<"48 kHz"<<"96 kHz");
-    //int arate;
+
     switch (index){
     case 0:
         arate = 16000;
@@ -104,12 +100,12 @@ void inputBox::on_Audiorate_currentIndexChanged(int index)
         arate = 44100;
         break;
     }
-    //emit audiorate(arate);
+
 }
 
 void inputBox::on_Channels_currentIndexChanged(int index)
 {
-    //int y;
+
     switch (index){
     case 0:
        channels = 1;
@@ -124,13 +120,12 @@ void inputBox::on_Channels_currentIndexChanged(int index)
 
         break;
     }
-    //emit channels(y);
 
 }
 
 void inputBox::on_VideoBitRate_currentIndexChanged(int index)
 {
-   //int vbrate;
+
     switch (index){
     case 0:
         vbrate = 1000;
@@ -160,14 +155,12 @@ void inputBox::on_VideoBitRate_currentIndexChanged(int index)
         vbrate = 4000;       
         break;
     }
-    //emit videobitrate(vbrate);
 
 }
 
 void inputBox::on_AudioBitRate_currentIndexChanged(int index)
 {
-    //"128 kbps"<<"256 kbps"<<"320 kbps"
-    //int abrate;
+
     switch (index){
     case 0:
         abrate = 128000;        
@@ -182,13 +175,12 @@ void inputBox::on_AudioBitRate_currentIndexChanged(int index)
         abrate = 128000;     
         break;
     }
-    //emit audiobitrate(abrate);
+
 }
 
 void inputBox::on_Framerate_currentIndexChanged(int index)
 {
-    //"20"<<"25"<<"30"<<"60"
-    //int framerate;
+
     switch (index){
     case 0:
         framerate = 20;
@@ -220,7 +212,7 @@ void inputBox::on_Framerate_currentIndexChanged(int index)
 void inputBox::on_VideoSRC_currentIndexChanged(int index)
 {
     //""<<"tcp"<<"File"
-    videoBIN=index;
+    videoBIN=index;//tipo de pipeline a construir
     switch (index){
     case 0:
          break;
@@ -233,7 +225,6 @@ void inputBox::on_VideoSRC_currentIndexChanged(int index)
     case 2:
         this->videoPath = QFileDialog::getOpenFileName(this, tr("opening"), "/home",
                        "Video files(*.mp4);;(*.avi);;(*.flv);; (*.mkv)");
-        //g_print("%s \n", this->videoPath.toUtf8().constData());
         break;
     default:
         break;
@@ -269,7 +260,6 @@ void inputBox::on_checkBox_clicked(bool checked)
     if(checked)
     {
        local = true;
-       //emit isLocal(local);
        QDir DevDir("/dev","video*",QDir::Name,QDir::System);
        ui->LocalCamera->addItems(DevDir.entryList());
        QFile file("/proc/asound/cards");
@@ -279,12 +269,12 @@ void inputBox::on_checkBox_clicked(bool checked)
            QTextStream in(&file);
            QString line = in.readLine();
            while(!line.isEmpty()) {
-               QString part1 = line.section("]", 0, 0);
-               QString part2 = part1.section("[", 1, 1);
-               ui->soundCards->addItem(part2);
+               QString part1 = line.section("]", -2, -2);
+               QString part2 = part1.section("[", -1, -1);
+               QString part3 = part2.section(" ", 0,0);
+               ui->soundCards->addItem(part3);
                g_print("%s \n", line.toUtf8().constData());
                line = in.readLine();
-
            }
            file.close();
        }
@@ -306,14 +296,14 @@ void inputBox::on_checkBox_clicked(bool checked)
 
 void inputBox::on_LocalCamera_currentIndexChanged(int index)
 {
-    QString localCamera = ui->LocalCamera->currentText();
-    g_print("%s \n", localCamera.toUtf8().constData());
+    this->localCamera = ui->LocalCamera->currentText();
+
 }
 
 void inputBox::on_soundCards_currentIndexChanged(int index)
 {
-    QString localAudioCard = ui->soundCards->currentText();
-    g_print("%s \n", localAudioCard.toUtf8().constData());
+    this->localAudioCard = ui->soundCards->currentText();
+
 }
 
 
