@@ -13,7 +13,7 @@
 #include <gst/audio/streamvolume.h>
 #include "ui_gstvideo.h"
 #include "inputbox.h"
-#include <string>
+#include <string.h>
 
 namespace Ui {
 class gstvideo;
@@ -89,8 +89,6 @@ private:
     GstBus *bus;
     GMainLoop *loop;
     QString videopath, audiopath, youkey;//path al archivo y key para youtube
-    int videoBIN;
-    bool isLocal;
     bool audioSame;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
     static guintptr cam_window_handle;
