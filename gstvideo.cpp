@@ -71,18 +71,15 @@ gstvideo::gstvideo(QWidget *parent) :
     gst_init(NULL, FALSE);
     input->exec();
     this->audiopath = input->audioPath;
-    audioSAME = input->audioBIN;
-    this->isLocal = input->local;
-    //apath = input->audioPath;
+    audioSAME = input->audioBIN; //this is static beacuse will used within static functions and callbacks
     g_print("aqui esta el path : %s \n", this->videopath.toUtf8().constData());
     g_print("youtube key is : %s \n", youkey.toUtf8().constData());
     g_print("video Resolution: %dx%d \n", input->resolutionX, input->resolutionY);
     g_print("audio rate is: %d; audio bitrate is: %d \n", input->arate, input->abrate);
     g_print("video settings - framerate: %d, video bitrate: %d \n",input->framerate, input->vbrate);
     g_print("audio channels is: %d \n", input->channels);
-    g_print("XXXXX %d \n", this->videoBIN);
+    g_print("XXXXX %d \n", input->videoBIN);
     qDebug()<<"path to a video is:"<<input->vport;
-    //WId window = ui->widget->winId();
 
 
 //building all elements and BINS
@@ -134,37 +131,31 @@ gstvideo::gstvideo(QWidget *parent) :
 
     int keyint = 2*input->framerate;
     //###### statics elements only for effects #########################################
+
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
     curr = gst_element_factory_make("identity", "curr");
+
     //#################################################################################
 
     g_object_set(this->volume, "volume", 0, NULL);
-    g_object_set(this->faac, "bitrate", 128000, NULL);
+    g_object_set(this->faac, "bitrate", input->abrate, NULL);
     printf("keyint %d", keyint);
     g_object_set(this->x264enc, "bitrate", input->vbrate, "key-int-max", keyint, "bframes", 0, "byte-stream", false, "aud", true, "tune", 2,
                  "threads", 4, "speed-preset", 2, NULL);
-    g_object_set(this->Vtcpsrc, "host", input->videotcp.toUtf8().constData(), "port", input->vport,NULL);
-    g_object_set(this->Atcpsrc, "host", input->audiotcp.toUtf8().constData(), "port", input->aport,NULL);
+
     g_object_set(this->Vfilesrc, "location", input->videoPath.toUtf8().constData(), NULL);
     g_object_set(this->Afilesrc, "location", input->audioPath.toUtf8().constData(), NULL);
-    g_object_set(this->Vlocalsrc, "do-timestamp", TRUE, "device", "/dev/video0", NULL);
-    g_object_set(this->Alocalsrc, "do-timestamp", TRUE, "device", "plughw:Generic", NULL);
-    //g_object_set(this->sink, "sync", TRUE, NULL);
-    //g_object_set(this->audiosink, "sync", TRUE, NULL);
-    //g_object_set(queue6, "leaky", 1, NULL);
 
 
-   // "x264enc bitrate=$vbitrate key-int-max=$keyint bframes=$h264_bframes byte-stream=false aud=true tune=zerolatency"
 
     pipeline = gst_pipeline_new("pipeline");
     this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
     this->flvmux = gst_element_factory_make("flvmux","flvmux");
     vdecoder = gst_element_factory_make("decodebin","vdecodebin");
     adecoder = gst_element_factory_make("decodebin","adecodebin");
-    /*rtmp://a.rtmp.youtube.com/live2/x/artes-musicales-2120.7d3c-dah3-mqek-6we2?videoKeyframeFrequency=1&totalDatarate=8128 app=live2
-     * flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2*/
-    g_object_set(this->rtmp, "location", "rtmp://a.rtmp.youtube.com/live2/x/artes-musicales-2120.htbx-z7z5-htru-730z?videoKeyframeFrequency=1&totalDatarate=8128 app=live2 flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2", NULL);
+    QString location = "rtmp://a.rtmp.youtube.com/live2/x/" + input->youtube + "?videoKeyframeFrequency=1&totalDatarate=8128 app=live2 flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2";
+    g_object_set(this->rtmp, "location", location.toUtf8().constData(), NULL);
     g_object_set(this->flvmux, "streamable", TRUE, NULL);
 
     this->Vcaps = gst_caps_new_simple("video/x-raw",
@@ -223,8 +214,13 @@ gstvideo::gstvideo(QWidget *parent) :
 
     if(input->local)
     {
-     // i will to use the vV4L2bin and abin - into my pipeline
-        //recordar los elementos ue activan sus pad a solicitud (tee - flvmux - etc)
+        //if local is selected, set the local objects
+        QString videoDevice="/dev/"+input->localCamera;
+        QString audioDevice = "plughw:"+input->localAudioCard;
+        qDebug()<<"tarjetaSonido es " << audioDevice;
+        qDebug()<<"video device es " << videoDevice;
+        g_object_set(this->Vlocalsrc, "do-timestamp", TRUE, "device", videoDevice.toUtf8().constData(), NULL);
+        g_object_set(this->Alocalsrc, "do-timestamp", TRUE, "device", audioDevice.toUtf8().constData(), NULL);
 
         blockpad = gst_element_get_static_pad(this->Vlocalsrc, "src");
                                    //audio local bin
@@ -394,6 +390,8 @@ gstvideo::gstvideo(QWidget *parent) :
             case 1://tcp input source
                 qDebug("entering TCP streaming \n");
 
+                g_object_set(this->Vtcpsrc, "host", input->videotcp.toUtf8().constData(), "port", input->vport,NULL);
+                g_object_set(this->Atcpsrc, "host", input->audiotcp.toUtf8().constData(), "port", input->aport,NULL);
                 blockpad = gst_element_get_static_pad(queue1, "src");
 
                 gst_bin_add_many(GST_BIN(this->aTCPbin), this->conv, this->audiosampler, this->volume, NULL);
@@ -427,29 +425,19 @@ gstvideo::gstvideo(QWidget *parent) :
 
                 blockpad = gst_element_get_static_pad(queue1, "src");
 
-                gst_bin_add_many(GST_BIN(this->aFILEbin), this->conv, this->audiosampler, this->volume, NULL);
-                //adecoder->queue2 linked after, we need a callback and padd-added signal
-                gst_element_link_many(this->conv, this->audiosampler, this->volume,  NULL);
-
-                gst_element_add_pad (this->aFILEbin, gst_ghost_pad_new ("src", binpad));//source pad of my Audio BIN
-
-                gst_element_add_pad (this->aFILEbin, gst_ghost_pad_new ("sink", pada));//sink pad of my aBIN
-
-                gst_bin_add_many(GST_BIN(pipeline), this->Vfilesrc, vdecoder, queue1,this->scale, this->conversor1,
+                gst_bin_add_many(GST_BIN(pipeline), this->Vfilesrc, vdecoder, queue1, this->scale, this->conversor1,
                                  this->videobalance, conv_before, curr, conv_after, this->sink, queue2,
-                                 this->aFILEbin, this->audiosink, NULL);
-                gst_element_link_many(this->Vfilesrc, vdecoder, NULL); //vdecoder and queue1 will linking in callback function
-                //gst_element_link_many(queue1, this->conversor1, this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
-                //gst_element_link_many(queue1, this->conversor1, NULL);
+                                 this->conv, this->audiosampler, this->volume, this->audiosink, NULL);
+                gst_element_link(this->Vfilesrc, vdecoder); //vdecoder and queue1 will linking in callback function
                 gst_element_link_many(queue1, this->scale, this->conversor1,NULL); //this->videobalance,conv_before, curr, conv_after, NULL);
-                //this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
-                gst_element_link_filtered (this->conversor1, this->videobalance, this->Vcaps);
+                gst_element_link(this->conversor1, this->videobalance);
                 gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
-                gst_element_link_many(queue2, this->aFILEbin, this->audiosink, NULL);
+                gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume, this->audiosink, NULL);
 
                 gst_object_unref(binpad);
                 gst_object_unref(pad);
                 gst_object_unref(pada);
+
                 break;
 
             default:
@@ -561,33 +549,6 @@ gstvideo::gstvideo(QWidget *parent) :
                 switch (input->videoBIN) {
                 case 1:
 
-                    blockpad = gst_element_get_static_pad(queue1, "src");
-
-                    gst_bin_add_many(GST_BIN(this->aFILEbin), this->conv, this->audiosampler, this->volume, NULL);
-                    //adecoder->queue2 linked after, we need a callback and padd-added signal
-                    gst_element_link_many(this->conv, this->audiosampler, this->volume,  NULL);
-
-                    gst_element_add_pad (this->aFILEbin, gst_ghost_pad_new ("src", binpad));//source pad of my Audio BIN
-
-                    gst_element_add_pad (this->aFILEbin, gst_ghost_pad_new ("sink", pada));//sink pad of my aBIN
-
-                    gst_bin_add_many(GST_BIN(pipeline), this->Vtcpsrc, vdecoder, queue1,  this->conversor1,
-                                     this->videobalance, conv_before, curr, conv_after, this->sink, Afilesrc,
-                                     adecoder, queue2, this->aFILEbin, this->audiosink, NULL);
-                    gst_element_link_many(this->Vtcpsrc, vdecoder, NULL); //vdecoder and queue1 will linking in callback function
-                    gst_element_link_many(queue1, this->conversor1, this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
-                    //gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
-                    //gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink,  NULL);
-                    gst_element_link_many(queue2, this->aFILEbin, this->audiosink, NULL);
-                    gst_element_link_many(this->Afilesrc, adecoder, NULL);
-
-                    gst_object_unref(binpad);
-                    gst_object_unref(pad);
-                    gst_object_unref(pada);
-
-                    break;
-                 case 2:
-
                     gst_bin_add_many(GST_BIN(this->aTCPbin), this->conv, this->audiosampler, this->volume, NULL);
                     //adecoder->queue2 linked after, we need a callback and padd-added signal
                     gst_element_link_many(this->conv, this->audiosampler, this->volume,  NULL);
@@ -609,6 +570,36 @@ gstvideo::gstvideo(QWidget *parent) :
                     gst_object_unref(binpad);
                     gst_object_unref(pad);
                     gst_object_unref(pada);
+
+                    break;
+                 case 2:
+
+                    qDebug("entrando ambas fuentes son archivos");
+
+                    blockpad = gst_element_get_static_pad(queue1, "src");
+
+                    gst_bin_add_many(GST_BIN(this->aFILEbin), this->conv, this->audiosampler, this->volume, NULL);
+                    //adecoder->queue2 linked after, we need a callback and padd-added signal
+                    gst_element_link_many(this->conv, this->audiosampler, this->volume,  NULL);
+
+                    gst_element_add_pad (this->aFILEbin, gst_ghost_pad_new ("src", binpad));//source pad of my Audio BIN
+
+                    gst_element_add_pad (this->aFILEbin, gst_ghost_pad_new ("sink", pada));//sink pad of my aBIN
+
+                    gst_bin_add_many(GST_BIN(pipeline), this->Vfilesrc, vdecoder, queue1,  this->conversor1,
+                                     this->videobalance, conv_before, curr, conv_after, this->sink, Afilesrc,
+                                     adecoder, queue2, this->aFILEbin, this->audiosink, NULL);
+                    gst_element_link_many(this->Vfilesrc, vdecoder, NULL); //vdecoder and queue1 will linking in callback function
+                    gst_element_link_many(queue1, this->conversor1, this->videobalance,conv_before, curr, conv_after,this->sink, NULL);
+                    //gst_element_link_filtered (this->conversor1,this->videobalance ,this->Vcaps);
+                    //gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->sink,  NULL);
+                    gst_element_link_many(queue2, this->aFILEbin, this->audiosink, NULL);
+                    gst_element_link_many(this->Afilesrc, adecoder, NULL);
+
+                    gst_object_unref(binpad);
+                    gst_object_unref(pad);
+                    gst_object_unref(pada);
+
                     break;
                 default:
                     break;
@@ -630,7 +621,8 @@ gstvideo::gstvideo(QWidget *parent) :
     cam_window_handle=window;
     this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
     gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, NULL, NULL);
-    //gst_object_unref (this->bus);
+    gst_object_unref (this->bus);
+
     GstBus *mbus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     gst_bus_add_signal_watch(mbus);
 
@@ -655,6 +647,7 @@ gstvideo::~gstvideo()
 {
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
     gst_object_unref(pipeline);
+    //gst_object_unref (this->bus);
     delete ui;
 }
 
@@ -842,9 +835,10 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
 //################################## DINAMIC CALLBACK for vdecoder ########################################################
 
 /* This function will be called by the pad-added signal */
+
 void gstvideo::videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer user_data) {
     g_print("entering into padd-added video function: ");
-    GstPad *sink_pad; //= gst_element_get_static_pad (queue2, "sink"); // pad for audio pipeline, the same data sourc
+    GstPad *sink_pad = gst_element_get_static_pad (queue2, "sink"); // pad for audio pipeline, the same data sourc
   GstPad *sink_pad_video = gst_element_get_static_pad(queue1, "sink");
   GstPadLinkReturn ret;
   GstCaps *new_pad_caps = NULL;
@@ -867,11 +861,10 @@ void gstvideo::videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer
   new_pad_caps = gst_pad_get_current_caps(new_pad);
   new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
   new_pad_type = gst_structure_get_name (new_pad_struct);
-  //g_print("audioSAME is: %d  \n", audioSAME);
 
   if ((g_str_has_prefix (new_pad_type, "audio/x-raw")) && (audioSAME == 3) ) {
     /* Attempt the link */
-      sink_pad = gst_element_get_static_pad (queue2, "sink"); // pad for audio pipeline, the same data sourc
+     // sink_pad = gst_element_get_static_pad (queue2, "sink"); // pad for audio pipeline, the same data source
     ret = gst_pad_link (new_pad, sink_pad);
     if (GST_PAD_LINK_FAILED (ret)) {
       g_print ("  Type is '%s' but link failed.\n", new_pad_type);
