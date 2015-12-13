@@ -72,14 +72,11 @@ gstvideo::gstvideo(QWidget *parent) :
     input->exec();
     this->audiopath = input->audioPath;
     audioSAME = input->audioBIN; //this is static beacuse will used within static functions and callbacks
-    g_print("aqui esta el path : %s \n", this->videopath.toUtf8().constData());
     g_print("youtube key is : %s \n", youkey.toUtf8().constData());
     g_print("video Resolution: %dx%d \n", input->resolutionX, input->resolutionY);
     g_print("audio rate is: %d; audio bitrate is: %d \n", input->arate, input->abrate);
     g_print("video settings - framerate: %d, video bitrate: %d \n",input->framerate, input->vbrate);
     g_print("audio channels is: %d \n", input->channels);
-    g_print("XXXXX %d \n", input->videoBIN);
-    qDebug()<<"path to a video is:"<<input->vport;
 
 
 //building all elements and BINS
@@ -118,6 +115,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->videorate = gst_element_factory_make("videorate", "videorate");
     this->audiorate = gst_element_factory_make("audiorate", "audiorate");
     this->audiosinkconvert = gst_element_factory_make("audioconvert","audiosinkconvert");
+    this->audioparse = gst_element_factory_make("audioparse", "audiopar");
 
 
     this->abin = gst_bin_new("abin");
@@ -140,12 +138,12 @@ gstvideo::gstvideo(QWidget *parent) :
 
     g_object_set(this->volume, "volume", 0, NULL);
     g_object_set(this->faac, "bitrate", input->abrate, NULL);
-    printf("keyint %d", keyint);
     g_object_set(this->x264enc, "bitrate", input->vbrate, "key-int-max", keyint, "bframes", 0, "byte-stream", false, "aud", true, "tune", 2,
                  "threads", 4, "speed-preset", 2, NULL);
 
     g_object_set(this->Vfilesrc, "location", input->videoPath.toUtf8().constData(), NULL);
     g_object_set(this->Afilesrc, "location", input->audioPath.toUtf8().constData(), NULL);
+    g_object_set(this->audioparse, "rate", input->arate, "channels", input->channels);
 
 
 
@@ -176,12 +174,12 @@ gstvideo::gstvideo(QWidget *parent) :
                                       "format", G_TYPE_STRING, "S16LE",
                                       "layout", G_TYPE_STRING, "interleaved",
                    NULL);
-    //video/x-h264,level=(string)'$h264_level',profile='$h264_profile
+
     this->enVcaps = gst_caps_new_simple("video/x-h264",
                    "level", G_TYPE_STRING, "4.1",
                    "profile", G_TYPE_STRING, "main",
                    NULL);
-    //audio/mpeg,mpegversion=4,stream-format=raw
+
     this->enAcaps = gst_caps_new_simple("audio/mpeg",
                    "mpegversion", G_TYPE_INT, 4,
                    "stream-format", G_TYPE_STRING, "raw",
@@ -217,18 +215,19 @@ gstvideo::gstvideo(QWidget *parent) :
         //if local is selected, set the local objects
         QString videoDevice="/dev/"+input->localCamera;
         QString audioDevice = "plughw:"+input->localAudioCard;
-        qDebug()<<"tarjetaSonido es " << audioDevice;
-        qDebug()<<"video device es " << videoDevice;
+        qDebug()<<"the sound card is " << audioDevice;
+        qDebug()<<"video device is " << videoDevice;
         g_object_set(this->Vlocalsrc, "do-timestamp", TRUE, "device", videoDevice.toUtf8().constData(), NULL);
         g_object_set(this->Alocalsrc, "do-timestamp", TRUE, "device", audioDevice.toUtf8().constData(), NULL);
 
         blockpad = gst_element_get_static_pad(this->Vlocalsrc, "src");
                                    //audio local bin
-        gst_bin_add_many(GST_BIN(this->abin), this->Alocalsrc, this->audiorate, this->conv, this->volume, NULL);
-        gst_element_link_many(this->Alocalsrc, this->audiorate, this->conv, NULL);
+        gst_bin_add_many(GST_BIN(this->abin), this->Alocalsrc, this->audiorate, this->conv, this->audioparse, this->volume, NULL);
+        gst_element_link_many(this->Alocalsrc, this->audiorate,this->conv, NULL);
                      //ghostpad for my audio bin
-        gst_element_link_filtered(this->conv, this->volume, this->Acaps);
-        gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
+        gst_element_link_filtered(this->conv, this->audioparse, this->Acaps);
+        gst_element_link(this->audioparse, this->volume);
+         gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
 
         gst_bin_add_many(GST_BIN(this->vV4L2bin), this->Vlocalsrc, this->videorate, this->conversor1,this->scale,
                          this->videobalance, NULL);//se añadio un videorate para asegurar un buen funcionamiento en el ximagesink
@@ -248,8 +247,7 @@ gstvideo::gstvideo(QWidget *parent) :
         gst_element_link_many(this->vV4L2bin,conv_before, curr, conv_after, this->Ltee1, NULL);//tee1 for video visualization
                                                                                                 //and streaming branch
         gst_element_link_many(queue6, this->videosinkconvert, this->sink, NULL);//for local visualization
-        gst_element_link_many(queue7, this->x264enc, this->h264parse, queue3, NULL);
-        //gst_element_link_filtered (this->h264parse, queue3, this->enVcaps); //queue3 will be linked with flvmux by requesting
+        gst_element_link_many(queue7, this->x264enc, this->h264parse, queue3, NULL); //queue3 will be linked with flvmux by requesting
         gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
         gst_element_link(this->abin, this->Ltee2);
         gst_element_link_many(queue8, this->audiosinkconvert, this->audiosink, NULL); // audio local branch
@@ -278,7 +276,7 @@ gstvideo::gstvideo(QWidget *parent) :
         }
 
         tee1_q7_pad = gst_element_request_pad (this->Ltee1, tee_src_pad_template1, NULL, NULL);
-         //g_print ("Obtained request pad %s for q7 branch.\n", gst_pad_get_name (tee1_q7_pad));
+
          q7_pad = gst_element_get_static_pad (queue7, "sink");
          /* Link the tee to the queue 7 */
          if (gst_pad_link (tee1_q7_pad, q7_pad) != GST_PAD_LINK_OK ){ // t2 ----> queue7
@@ -289,7 +287,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
 
          tee2_q9_pad = gst_element_request_pad (this->Ltee2, tee_src_pad_template2, NULL, NULL);
-          //g_print ("Obtained request pad %s for q2 branch.\n", gst_pad_get_name (tee2_q9_pad));
+
           q9_pad = gst_element_get_static_pad (queue9, "sink");
           /* Link the tee to the queue 7 */
           if (gst_pad_link (tee2_q9_pad, q9_pad) != GST_PAD_LINK_OK ){
@@ -301,7 +299,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
 
           tee1_q6_pad = gst_element_request_pad (this->Ltee1, tee_src_pad_template1, NULL, NULL);
-          //g_print ("Obtained request pad %s for q6 branch.\n", gst_pad_get_name (tee1_q6_pad));
+
           q6_pad = gst_element_get_static_pad(queue6, "sink");
           /* Link the tee to the queue 6 */
           if (gst_pad_link(tee1_q6_pad, q6_pad) != GST_PAD_LINK_OK ){ //  t1 ----> queue6
@@ -312,7 +310,6 @@ gstvideo::gstvideo(QWidget *parent) :
 
           /* Obtaining request pads for the tee1 elements*/
           tee2_q8_pad = gst_element_request_pad (this->Ltee2, tee_src_pad_template2, NULL, NULL);
-          //g_print ("Obtained request pad %s for q6 branch.\n", gst_pad_get_name (tee2_q8_pad));
           q8_pad = gst_element_get_static_pad (queue8, "sink");
           /* Link the tee to the queue 6 */
           if (gst_pad_link (tee2_q8_pad, q8_pad) != GST_PAD_LINK_OK ){
@@ -364,8 +361,6 @@ gstvideo::gstvideo(QWidget *parent) :
              if (gst_pad_link(video_queue3_src_pad, flvmux_sink_video_pad) == GST_PAD_LINK_OK ) {
                  printf("link video queue with flvmixer\n");
              }
-
-             //gst_element_set_state(this->flvmux, GST_STATE_PAUSED);
 
              gst_object_unref(audio_queue5_src_pad);
              gst_object_unref(video_queue3_src_pad);
@@ -953,19 +948,20 @@ exit:
 void gstvideo::start()
 {
     gst_element_set_state (pipeline, GST_STATE_PLAYING);
+    qDebug()<<"the Pipeline State is changing to playing STATE";
 }
 
 void gstvideo::stop()
 {
     if (pipeline != NULL)
     {
-        gst_element_set_state (pipeline, GST_STATE_NULL);
-        //g_object_unref(pipeline);
+        gst_element_set_state (pipeline, GST_STATE_PAUSED);
+        qDebug()<<"the Pipeline State is changing to Paused";
+;
     }
 }
 
 void gstvideo::contrast(int c){
-    //g_print("%d/n", x);
     c = c*10;
     this->update_color_channel("CONTRAST", c, GST_COLOR_BALANCE(this->videobalance));
 }
@@ -998,4 +994,3 @@ void gstvideo::avolume(int y){
     g_print("%d \n", x);
     gst_stream_volume_set_volume (GST_STREAM_VOLUME(this->volume), GST_STREAM_VOLUME_FORMAT_LINEAR, x);
 }
-
