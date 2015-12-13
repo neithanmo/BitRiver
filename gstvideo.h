@@ -66,6 +66,7 @@ private:
     GstElement *videorate;
     GstElement *audiorate;
     GstElement *audiosinkconvert;
+    GstElement *audioparse;
     // ######## Custom Bins ##########################################################################
     GstElement *abin;       //audio bin, para captura de microfono, control de volumen
                             // tambien se utiliza para el streaming
