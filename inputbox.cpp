@@ -126,29 +126,34 @@ void inputBox::on_Channels_currentIndexChanged(int index)
 void inputBox::on_VideoBitRate_currentIndexChanged(int index)
 {
 
+   /* QStringList()<<"400 kbit/s"<<"1 Mbit/s"<<"1.15 Mbit/s"<<"2.5 Mbit/s"<<"4 Mbit/s"
+                                   <<"8 Mbit/s"<<"10 Mbit/s"<<"15 Mbit/s"<<"20 Mbit/s");*/
     switch (index){
     case 0:
-        vbrate = 1000;
+        vbrate = 400;
         break;
     case 1:
-        vbrate = 1115;       
+        vbrate = 1000;
         break;
     case 2:
-        vbrate = 2500;       
+        vbrate = 1150;
         break;
     case 3:
-        vbrate = 4000;        
+        vbrate = 2500;       
         break;
     case 4:
-        vbrate = 8000;        
+        vbrate = 4000;        
         break;
     case 5:
-        vbrate = 10000;        
+        vbrate = 8000;        
         break;
     case 6:
-        vbrate = 15000;       
+        vbrate = 10000;        
         break;
     case 7:
+        vbrate = 15000;       
+        break;
+    case 8:
         vbrate = 20000;        
         break;
     default:
