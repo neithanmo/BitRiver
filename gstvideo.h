@@ -8,15 +8,18 @@
 #include <gst/video/videooverlay.h>
 #include <QMessageBox>
 #include <QSlider>
-#include "gstaudio.h"
 #include <math.h>
-
+#include <QLineEdit>
+#include <gst/audio/streamvolume.h>
+#include "ui_gstvideo.h"
+#include "inputbox.h"
+#include <string.h>
 
 namespace Ui {
 class gstvideo;
-class gstaudio;
+//class gstaudio;
 }
-
+//..
 
 class gstvideo : public QWidget
 {
@@ -25,7 +28,7 @@ class gstvideo : public QWidget
 public:
     gstvideo(QWidget *parent = 0);
     ~gstvideo();
-    gstaudio *audio;
+
 
 private slots:
     void start();
@@ -35,29 +38,80 @@ private slots:
     void hue(int);
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
-    void volume(int);
+    void avolume(int);    
 
     void on_lineEdit_editingFinished();
 
 private:
     Ui::gstvideo *ui;
     WId window;
-    GstCaps *caps;
-    GstElement *src;
-    GstElement *conversor1;
+    inputBox *input = new inputBox;
+    GstCaps *Vcaps; //filtro para visualizar el stream a 640x480
+    GstCaps *Scaps; //resolucion del streaming, la resolucion es definida por el usuario
+    GstCaps *Acaps;
+    GstCaps *enAcaps; //audio encoding output format
+    GstCaps *enVcaps;//video encoding output format
+    GstElement *Vlocalsrc;
+    GstElement *Vtcpsrc; //tcp videosource;
+    GstElement *Vfilesrc;
+    GstElement *Atcpsrc; //tcp audio source;
+    GstElement *Afilesrc; //file audio source
+    GstElement *conversor1; //videoconvert for visualization
+    GstElement *conversor2;
     GstElement *videobalance;
     GstElement *sink;
     GstElement *audiosink;
+    GstElement *Alocalsrc;
+    GstElement *conv;       //audioconvert
+    GstElement *audiosampler;
+    GstElement *videosinkconvert;
+    GstElement *videorate;
+    GstElement *audiorate;
+    GstElement *audiosinkconvert;
+    GstElement *audioparse;
+    // ######## Custom Bins ##########################################################################
+    GstElement *abin;       //audio bin, para captura de microfono, control de volumen
+                            // tambien se utiliza para el streaming
+    GstElement *aTCPbin;    // Audio bin for tcp audio source
+    GstElement * aFILEbin;  // audio file source bin
+    GstElement *vTCPbin;    //tcp video source bin
+    GstElement *vV4L2bin;   //video local camera source bin
+    GstElement *vFILEbin;   //video file source bin
+    GstElement *volume;
+    GstElement *aacparse;
+    GstElement *x264enc;
+    GstElement *faac;
+    GstElement *h264parse;
+    GstElement *tcpclientsrc;
+    GstElement *avdec_h264;
+    GstElement *flvmux;
+    GstElement *Ltee1; //tee for video
+    GstElement *Ltee2;//tee for audio
+    GstElement *rtmp;
+    GstElement *scale;
     GstBus *bus;
     GMainLoop *loop;
+    QString videopath, audiopath, youkey;//path al archivo y key para youtube
+    bool audioSame;
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
     static guintptr cam_window_handle;
     void update_color_channel (gchar*, gint, GstColorBalance*);
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
     static gboolean to_block_src(gpointer user_data);
+    static void callback(GstBus  *bus, GstMessage *msg, gpointer user_data);
+    static void videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer user_data);
+    static void audioPad_added_handler (GstElement *src, GstPad *new_pad, gpointer user_data);
+
+
+    //void avolume(gint);
     //int effect;
-    /*gst-launch-1.0 v4l2src ! videoconvert ! videobalance ! videoconvert ! agingtv ! videoconvert ! autovideosink*/
+    // BIN V4L2 SOURCE/##################################
+    /* gst-launch-1.0 v4l2src ! videoconvert ! videobalance ! videoconvert ! agingtv ! videoconvert ! autovideosink */
+
+     // BIN TCPVIDEOSRC ###########################################################################################
+      /* "tcpclientsrc host=163.178.119.218 port=5000 ! flvdemux name=demux1 ! h264parse ! avdec_h264 max-threads=4 ! videorate" */
+
 
 };
 
