@@ -63,8 +63,9 @@ public:
     {
         if (gstvideo->objectName().isEmpty())
             gstvideo->setObjectName(QStringLiteral("gstvideo"));
-        gstvideo->resize(741, 661);
-        gstvideo->setMinimumSize(QSize(741, 0));
+        gstvideo->resize(660, 661);
+        gstvideo->setMinimumSize(QSize(660, 0));
+        gstvideo->setMaximumSize(QSize(660, 16777215));
         widget = new QWidget(gstvideo);
         widget->setObjectName(QStringLiteral("widget"));
         widget->setGeometry(QRect(10, 0, 723, 425));
