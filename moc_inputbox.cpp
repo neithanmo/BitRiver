@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_inputBox_t {
-    QByteArrayData data[16];
-    char stringdata[404];
+    QByteArrayData data[15];
+    char stringdata[372];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -40,11 +40,10 @@ QT_MOC_LITERAL(7, 137, 35),
 QT_MOC_LITERAL(8, 173, 35),
 QT_MOC_LITERAL(9, 209, 32),
 QT_MOC_LITERAL(10, 242, 31),
-QT_MOC_LITERAL(11, 274, 31),
-QT_MOC_LITERAL(12, 306, 19),
-QT_MOC_LITERAL(13, 326, 7),
-QT_MOC_LITERAL(14, 334, 34),
-QT_MOC_LITERAL(15, 369, 33)
+QT_MOC_LITERAL(11, 274, 19),
+QT_MOC_LITERAL(12, 294, 7),
+QT_MOC_LITERAL(13, 302, 34),
+QT_MOC_LITERAL(14, 337, 33)
     },
     "inputBox\0on_buttonBox_accepted\0\0"
     "on_Resolution_currentIndexChanged\0"
@@ -54,7 +53,6 @@ QT_MOC_LITERAL(15, 369, 33)
     "on_AudioBitRate_currentIndexChanged\0"
     "on_Framerate_currentIndexChanged\0"
     "on_VideoSRC_currentIndexChanged\0"
-    "on_AudioSRC_currentIndexChanged\0"
     "on_checkBox_clicked\0checked\0"
     "on_LocalCamera_currentIndexChanged\0"
     "on_soundCards_currentIndexChanged\0"
@@ -67,7 +65,7 @@ static const uint qt_meta_data_inputBox[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      12,   14, // methods
+      11,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -75,18 +73,17 @@ static const uint qt_meta_data_inputBox[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,   74,    2, 0x08,
-       3,    1,   75,    2, 0x08,
-       5,    1,   78,    2, 0x08,
-       6,    1,   81,    2, 0x08,
-       7,    1,   84,    2, 0x08,
-       8,    1,   87,    2, 0x08,
-       9,    1,   90,    2, 0x08,
-      10,    1,   93,    2, 0x08,
-      11,    1,   96,    2, 0x08,
-      12,    1,   99,    2, 0x08,
-      14,    1,  102,    2, 0x08,
-      15,    1,  105,    2, 0x08,
+       1,    0,   69,    2, 0x08,
+       3,    1,   70,    2, 0x08,
+       5,    1,   73,    2, 0x08,
+       6,    1,   76,    2, 0x08,
+       7,    1,   79,    2, 0x08,
+       8,    1,   82,    2, 0x08,
+       9,    1,   85,    2, 0x08,
+      10,    1,   88,    2, 0x08,
+      11,    1,   91,    2, 0x08,
+      13,    1,   94,    2, 0x08,
+      14,    1,   97,    2, 0x08,
 
  // slots: parameters
     QMetaType::Void,
@@ -97,8 +94,7 @@ static const uint qt_meta_data_inputBox[] = {
     QMetaType::Void, QMetaType::Int,    4,
     QMetaType::Void, QMetaType::Int,    4,
     QMetaType::Void, QMetaType::Int,    4,
-    QMetaType::Void, QMetaType::Int,    4,
-    QMetaType::Void, QMetaType::Bool,   13,
+    QMetaType::Void, QMetaType::Bool,   12,
     QMetaType::Void, QMetaType::Int,    4,
     QMetaType::Void, QMetaType::Int,    4,
 
@@ -118,10 +114,9 @@ void inputBox::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 5: _t->on_AudioBitRate_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 6: _t->on_Framerate_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 7: _t->on_VideoSRC_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 8: _t->on_AudioSRC_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 9: _t->on_checkBox_clicked((*reinterpret_cast< bool(*)>(_a[1]))); break;
-        case 10: _t->on_LocalCamera_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 11: _t->on_soundCards_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 8: _t->on_checkBox_clicked((*reinterpret_cast< bool(*)>(_a[1]))); break;
+        case 9: _t->on_LocalCamera_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 10: _t->on_soundCards_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
         }
     }
@@ -152,13 +147,13 @@ int inputBox::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 12)
+        if (_id < 11)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 12;
+        _id -= 11;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 12)
+        if (_id < 11)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 12;
+        _id -= 11;
     }
     return _id;
 }

@@ -185,19 +185,6 @@
     <string>Signal Sources</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="Record">
-   <property name="geometry">
-    <rect>
-     <x>430</x>
-     <y>260</y>
-     <width>119</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Local Recording</string>
-   </property>
-  </widget>
   <widget class="QLabel" name="label_9">
    <property name="geometry">
     <rect>
@@ -231,36 +218,28 @@
    <widget class="QComboBox" name="LocalCamera"/>
    <widget class="QComboBox" name="soundCards"/>
   </widget>
-  <widget class="QSplitter" name="splitter_2">
+  <widget class="QComboBox" name="VideoSRC">
    <property name="geometry">
     <rect>
      <x>540</x>
-     <y>65</y>
-     <width>116</width>
-     <height>151</height>
+     <y>70</y>
+     <width>101</width>
+     <height>27</height>
     </rect>
    </property>
-   <property name="orientation">
-    <enum>Qt::Vertical</enum>
+  </widget>
+  <widget class="QLineEdit" name="VideoPath">
+   <property name="geometry">
+    <rect>
+     <x>540</x>
+     <y>110</y>
+     <width>114</width>
+     <height>21</height>
+    </rect>
    </property>
-   <widget class="QComboBox" name="VideoSRC"/>
-   <widget class="QLabel" name="label_8">
-    <property name="text">
-     <string>Video</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="VideoPath">
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_10">
-    <property name="text">
-     <string>Audio</string>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="AudioSRC"/>
-   <widget class="QLineEdit" name="AudioPath"/>
+   <property name="text">
+    <string/>
+   </property>
   </widget>
  </widget>
  <resources/>
@@ -300,64 +279,32 @@
   <connection>
    <sender>checkBox</sender>
    <signal>clicked(bool)</signal>
-   <receiver>VideoPath</receiver>
-   <slot>clear()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>454</x>
-     <y>51</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>542</x>
-     <y>121</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>AudioPath</receiver>
-   <slot>clear()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>436</x>
-     <y>54</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>549</x>
-     <y>208</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>checkBox</sender>
-   <signal>clicked(bool)</signal>
    <receiver>VideoSRC</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>464</x>
-     <y>49</y>
+     <x>385</x>
+     <y>53</y>
     </hint>
     <hint type="destinationlabel">
-     <x>555</x>
-     <y>74</y>
+     <x>619</x>
+     <y>82</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>checkBox</sender>
    <signal>clicked(bool)</signal>
-   <receiver>AudioSRC</receiver>
+   <receiver>VideoPath</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>420</x>
-     <y>58</y>
+     <x>458</x>
+     <y>44</y>
     </hint>
     <hint type="destinationlabel">
-     <x>552</x>
-     <y>179</y>
+     <x>609</x>
+     <y>121</y>
     </hint>
    </hints>
   </connection>
