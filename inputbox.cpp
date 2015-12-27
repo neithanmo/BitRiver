@@ -19,7 +19,6 @@ inputBox::inputBox(QWidget *parent) :
     ui->VideoBitRate->addItems(QStringList()<<"400 kbit/s"<<"1 Mbit/s"<<"1.15 Mbit/s"<<"2.5 Mbit/s"<<"4 Mbit/s"
                                <<"8 Mbit/s"<<"10 Mbit/s"<<"15 Mbit/s"<<"20 Mbit/s");
     ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
-    ui->AudioSRC->addItems(QStringList()<<""<<"tcp"<<"File"<<"the same");
     this->setWindowTitle("Streaming Settings");
     this->local=false;
 
@@ -36,9 +35,7 @@ void inputBox::on_buttonBox_accepted()
 {
     this->youtube=ui->youtubeLine->text();
     this->videotcp = ui->VideoPath->text().section(":", -2, -2);
-    this->audiotcp = ui->AudioPath->text().section(":", -2, -2);
     this->vport = ui->VideoPath->text().section(":", -1, -1).toInt();
-    this->aport = ui->AudioPath->text().section(":", -1, -1).toInt();
 
 }
 
@@ -201,17 +198,11 @@ void inputBox::on_Framerate_currentIndexChanged(int index)
         break;
     case 3:
         framerate = 60;
-
-        //emit frameinfo(60);
         break;
     default:
         framerate = 25;
-        //this->emisor(framerate);
-
         break;
     }
-    //emit frameinfo(framerate);
-
 }
 
 void inputBox::on_VideoSRC_currentIndexChanged(int index)
@@ -237,28 +228,7 @@ void inputBox::on_VideoSRC_currentIndexChanged(int index)
 
 }
 
-void inputBox::on_AudioSRC_currentIndexChanged(int index)
-{
-     audioBIN=index;
-    switch (index){
-    case 0:
-        break;
-    case 1:
-        QMessageBox::information(this,
-                                 "tcp input stream example", "write your ip and port of your audio server on the lineEdit below\n"
-                                 "for example: \n 192.168.0.1:6000 ; here the host is 192.168.0.1 and the port is: 6000 ",
-                                 QMessageBox::Ok);
-        break;
-    case 2:
-        this->audioPath = QFileDialog::getOpenFileName(this, tr("opening"), "/home", "All files(*.mp3);; (*.mp4);;(*.flv)");
-        break;
-    case 3://the same
-        break;
-    default:
-        break;
-    }
 
-}
 
 void inputBox::on_checkBox_clicked(bool checked)
 {
@@ -289,7 +259,6 @@ void inputBox::on_checkBox_clicked(bool checked)
     {
         local = false;
         ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
-        ui->AudioSRC->addItems(QStringList()<<""<<"tcp"<<"File"<<"the same");
         ui->LocalCamera->clear();
         ui->soundCards->clear();
     }
