@@ -278,33 +278,33 @@
   </connection>
   <connection>
    <sender>checkBox</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>VideoSRC</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>447</x>
-     <y>48</y>
+     <x>385</x>
+     <y>53</y>
     </hint>
     <hint type="destinationlabel">
-     <x>622</x>
-     <y>83</y>
+     <x>619</x>
+     <y>82</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>checkBox</sender>
-   <signal>clicked()</signal>
+   <signal>clicked(bool)</signal>
    <receiver>VideoPath</receiver>
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>401</x>
-     <y>53</y>
+     <x>458</x>
+     <y>44</y>
     </hint>
     <hint type="destinationlabel">
-     <x>641</x>
-     <y>115</y>
+     <x>609</x>
+     <y>121</y>
     </hint>
    </hints>
   </connection>
