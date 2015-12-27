@@ -21,8 +21,6 @@ inputBox::inputBox(QWidget *parent) :
     ui->VideoSRC->addItems(QStringList()<<""<<"tcp"<<"File");
     this->setWindowTitle("Streaming Settings");
     this->local=false;
-
-
 }
 
 
