@@ -1,9 +1,7 @@
 #include "gstvideo.h"
 
 guintptr gstvideo::cam_window_handle;
-
 static GstElement *pipeline; //= gst_pipeline_new("pipeline");
-//static GstElement *bin; // audio bin
 static GstElement *curr ;//= gst_element_factory_make("identity", "curr"); //current efect
 static GstPad *blockpad; //source pad de mi fuente
 static GstElement *conv_before;// = gst_element_factory_make("videoconvert", "conv_after");
@@ -88,8 +86,6 @@ gstvideo::gstvideo(QWidget *parent) :
     this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
     this->faac = gst_element_factory_make("voaacenc","aacAudioencoder");//se cambio avenc_aac por voaacenc, ahora audio branch funcioona
     this->aacparse = gst_element_factory_make("aacparse", "aacparse");
-
-
     queue1 = gst_element_factory_make("queue", "queue1");
     queue3 = gst_element_factory_make("queue", "queue3");
     queue4 = gst_element_factory_make("queue", "queue4");
@@ -108,17 +104,16 @@ gstvideo::gstvideo(QWidget *parent) :
     this->audiorate = gst_element_factory_make("audiorate", "audiorate");
     this->audiosinkconvert = gst_element_factory_make("audioconvert","audiosinkconvert");
     this->audioparse = gst_element_factory_make("audioparse", "audiopar");
-    this->abin = gst_bin_new("abin");
-
-
-    int keyint = 2*input->framerate;
-    //###### statics elements only for effects #########################################
-
+    pipeline = gst_pipeline_new("pipeline");
+    this->rtmp = gst_element_factory_make("fakesink","rtmp");
+    this->flvmux = gst_element_factory_make("flvmux","flvmux");
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
     curr = gst_element_factory_make("identity", "curr");
 
-    //#################################################################################
+    int keyint = 2*input->framerate;
+    QString location = "rtmp://a.rtmp.youtube.com/live2/x/" + input->youtube + "?videoKeyframeFrequency=1&totalDatarate=8128 app=live2 flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2";
+    //g_object_set(this->rtmp, "location", location.toUtf8().constData(), "sync", FALSE, NULL);
 
     g_object_set(this->volume, "volume", 0, NULL);
     g_object_set(this->faac, "bitrate", input->abrate, NULL);
@@ -126,17 +121,7 @@ gstvideo::gstvideo(QWidget *parent) :
                  "threads", 4, "speed-preset", 1, "pass", 17, NULL);
     g_object_set(this->sink, "sync", FALSE, NULL);
     g_object_set(this->audiosink, "sync", FALSE, NULL);
-
     g_object_set(this->audioparse, "rate", input->arate, "channels", input->channels, NULL);
-
-
-
-    pipeline = gst_pipeline_new("pipeline");
-    this->rtmp = gst_element_factory_make("fakesink","rtmp");
-    this->flvmux = gst_element_factory_make("flvmux","flvmux");
-
-    QString location = "rtmp://a.rtmp.youtube.com/live2/x/" + input->youtube + "?videoKeyframeFrequency=1&totalDatarate=8128 app=live2 flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2";
-    //g_object_set(this->rtmp, "location", location.toUtf8().constData(), "sync", FALSE, NULL);
     g_object_set(this->flvmux, "streamable", TRUE, NULL);
 
     this->Vcaps = gst_caps_new_simple("video/x-raw",
@@ -196,6 +181,8 @@ gstvideo::gstvideo(QWidget *parent) :
     if(input->local)
     {
         //if local is selected, set the local objects
+        this->abin = gst_bin_new("abin");
+        this->vV4L2bin = gst_bin_new("vV4L2bin");
         this->Vlocalsrc = gst_element_factory_make("v4l2src", "v4l2src");
         this->Alocalsrc = gst_element_factory_make("alsasrc", "alsasrc");
         QString videoDevice="/dev/"+input->localCamera;
@@ -218,7 +205,7 @@ gstvideo::gstvideo(QWidget *parent) :
                          this->videobalance, NULL);//se añadio un videorate para asegurar un buen funcionamiento en el ximagesink
 
         gst_element_link_many(this->Vlocalsrc, this->videorate, this->conversor1, this->scale, NULL);
-        gst_element_link_filtered (this->scale,this->videobalance ,this->Vcaps);// Streaming caps
+        gst_element_link_filtered (this->scale,this->videobalance ,this->Scaps);// Streaming caps
         gst_element_add_pad (this->vV4L2bin, gst_ghost_pad_new ("src", pad));
 
 
@@ -609,12 +596,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
 
 
-    }//fin else for input->isLocal evaluacion
-
-
-
-
-    //#####################################################################################################################
+    }//end of else for input->isLocal evaluacion
 
     window = ui->widget->winId();
 
@@ -633,10 +615,8 @@ gstvideo::gstvideo(QWidget *parent) :
     connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(avolume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
-    //connect(input->Video, SIGNAL(ui->), this, SLOT(videoPath(int)));
     g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), NULL);
     g_signal_connect(mbus, "message::error", G_CALLBACK(callback), NULL);
-    //connect(ui->pushButton,SIGNAL(clicked()), this, SLOT() )
 
     delete input;
 }
