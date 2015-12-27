@@ -54,7 +54,6 @@ QT_MOC_LITERAL(15, 369, 33)
     "on_AudioBitRate_currentIndexChanged\0"
     "on_Framerate_currentIndexChanged\0"
     "on_VideoSRC_currentIndexChanged\0"
-    "on_AudioSRC_currentIndexChanged\0"
     "on_checkBox_clicked\0checked\0"
     "on_LocalCamera_currentIndexChanged\0"
     "on_soundCards_currentIndexChanged\0"
@@ -118,7 +117,6 @@ void inputBox::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 5: _t->on_AudioBitRate_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 6: _t->on_Framerate_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 7: _t->on_VideoSRC_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 8: _t->on_AudioSRC_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 9: _t->on_checkBox_clicked((*reinterpret_cast< bool(*)>(_a[1]))); break;
         case 10: _t->on_LocalCamera_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 11: _t->on_soundCards_currentIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
