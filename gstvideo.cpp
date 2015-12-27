@@ -27,6 +27,7 @@ gstvideo::gstvideo(QWidget *parent) :
 {
 
     ui->setupUi(this);
+    this->setWindowTitle("BitRiver");
     ui->slider1->setRange(-100,100);//contraste 0 -> 2. default=1
     ui->slider1->setTickPosition(QSlider::TicksAbove);
     ui->slider2->setRange(-100,100);//brillo    -1 -> 1. default=0
@@ -54,6 +55,7 @@ gstvideo::gstvideo(QWidget *parent) :
                             <<"warptv"<<"shagadelictv"<< "revtv"<< "radioactv"<< "rippletv"<<"TehRoxx0r"<<"Cartoon"<<"invert"
                            <<"pixeliz0r"<<"Nervous"<<"Vertigo"<<"Color Distance"<<"perspective"<<"color-B"<<"Baltan"<<"Twolay0r"<<"threelay0r"
                            <<"bw0r"<<"Sobel"<<"Distort0r");
+
     QObject::connect(ui->slider1, SIGNAL(valueChanged(int)),
                      ui->progressBar1, SLOT(setValue(int)));
     QObject::connect(ui->slider2, SIGNAL(valueChanged(int)),
