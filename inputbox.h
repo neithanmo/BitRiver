@@ -27,11 +27,10 @@ public:
     int VBIN;
     int arate, channels,framerate; //audio rate, channels and frame rate for system ettings
     int resolutionX, resolutionY;
-    int vbrate,abrate, videoBIN, audioBIN; //What bin I will to use in my pipeline?
+    int vbrate,abrate, videoBIN; //What bin I will to use in my pipeline?
     QString youtube;
-    QString audioPath, videoPath; //Line edith paths, ip and port or file path
-    QString localCamera, localAudioCard, videotcp, audiotcp; //local paths for sound cards and video locall cameras
-    int aport;
+    QString videoPath; //Line edith paths, ip and port or file path
+    QString localCamera, localAudioCard, videotcp; //local paths for sound cards and video locall cameras
     int vport;
     //bool same;
 
