@@ -247,8 +247,8 @@ public:
         retranslateUi(inputBox);
         QObject::connect(buttonBox, SIGNAL(accepted()), inputBox, SLOT(accept()));
         QObject::connect(buttonBox, SIGNAL(rejected()), inputBox, SLOT(reject()));
-        QObject::connect(checkBox, SIGNAL(clicked()), VideoSRC, SLOT(clear()));
-        QObject::connect(checkBox, SIGNAL(clicked()), VideoPath, SLOT(clear()));
+        QObject::connect(checkBox, SIGNAL(clicked(bool)), VideoSRC, SLOT(clear()));
+        QObject::connect(checkBox, SIGNAL(clicked(bool)), VideoPath, SLOT(clear()));
 
         QMetaObject::connectSlotsByName(inputBox);
     } // setupUi
