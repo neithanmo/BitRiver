@@ -61,19 +61,13 @@ public:
     QComboBox *Framerate;
     QLabel *label_11;
     QLabel *label_12;
-    QCheckBox *Record;
     QLabel *label_9;
     QSplitter *splitter;
     QCheckBox *checkBox;
     QComboBox *LocalCamera;
     QComboBox *soundCards;
-    QSplitter *splitter_2;
     QComboBox *VideoSRC;
-    QLabel *label_8;
     QLineEdit *VideoPath;
-    QLabel *label_10;
-    QComboBox *AudioSRC;
-    QLineEdit *AudioPath;
 
     void setupUi(QDialog *inputBox)
     {
@@ -227,9 +221,6 @@ public:
         label_12 = new QLabel(inputBox);
         label_12->setObjectName(QStringLiteral("label_12"));
         label_12->setGeometry(QRect(470, 20, 79, 15));
-        Record = new QCheckBox(inputBox);
-        Record->setObjectName(QStringLiteral("Record"));
-        Record->setGeometry(QRect(430, 260, 119, 23));
         label_9 = new QLabel(inputBox);
         label_9->setObjectName(QStringLiteral("label_9"));
         label_9->setGeometry(QRect(540, 40, 101, 23));
@@ -246,36 +237,18 @@ public:
         soundCards = new QComboBox(splitter);
         soundCards->setObjectName(QStringLiteral("soundCards"));
         splitter->addWidget(soundCards);
-        splitter_2 = new QSplitter(inputBox);
-        splitter_2->setObjectName(QStringLiteral("splitter_2"));
-        splitter_2->setGeometry(QRect(540, 65, 116, 151));
-        splitter_2->setOrientation(Qt::Vertical);
-        VideoSRC = new QComboBox(splitter_2);
+        VideoSRC = new QComboBox(inputBox);
         VideoSRC->setObjectName(QStringLiteral("VideoSRC"));
-        splitter_2->addWidget(VideoSRC);
-        label_8 = new QLabel(splitter_2);
-        label_8->setObjectName(QStringLiteral("label_8"));
-        splitter_2->addWidget(label_8);
-        VideoPath = new QLineEdit(splitter_2);
+        VideoSRC->setGeometry(QRect(540, 70, 101, 27));
+        VideoPath = new QLineEdit(inputBox);
         VideoPath->setObjectName(QStringLiteral("VideoPath"));
-        splitter_2->addWidget(VideoPath);
-        label_10 = new QLabel(splitter_2);
-        label_10->setObjectName(QStringLiteral("label_10"));
-        splitter_2->addWidget(label_10);
-        AudioSRC = new QComboBox(splitter_2);
-        AudioSRC->setObjectName(QStringLiteral("AudioSRC"));
-        splitter_2->addWidget(AudioSRC);
-        AudioPath = new QLineEdit(splitter_2);
-        AudioPath->setObjectName(QStringLiteral("AudioPath"));
-        splitter_2->addWidget(AudioPath);
+        VideoPath->setGeometry(QRect(540, 110, 114, 21));
 
         retranslateUi(inputBox);
         QObject::connect(buttonBox, SIGNAL(accepted()), inputBox, SLOT(accept()));
         QObject::connect(buttonBox, SIGNAL(rejected()), inputBox, SLOT(reject()));
-        QObject::connect(checkBox, SIGNAL(clicked(bool)), VideoPath, SLOT(clear()));
-        QObject::connect(checkBox, SIGNAL(clicked(bool)), AudioPath, SLOT(clear()));
-        QObject::connect(checkBox, SIGNAL(clicked(bool)), VideoSRC, SLOT(clear()));
-        QObject::connect(checkBox, SIGNAL(clicked(bool)), AudioSRC, SLOT(clear()));
+        QObject::connect(checkBox, SIGNAL(clicked()), VideoSRC, SLOT(clear()));
+        QObject::connect(checkBox, SIGNAL(clicked()), VideoPath, SLOT(clear()));
 
         QMetaObject::connectSlotsByName(inputBox);
     } // setupUi
@@ -292,12 +265,9 @@ public:
         label_3->setText(QApplication::translate("inputBox", "Framerate:", 0));
         label_11->setText(QApplication::translate("inputBox", "Encoding settings", 0));
         label_12->setText(QApplication::translate("inputBox", "Signal Sources", 0));
-        Record->setText(QApplication::translate("inputBox", "Local Recording", 0));
         label_9->setText(QApplication::translate("inputBox", "External Sources", 0));
         checkBox->setText(QApplication::translate("inputBox", "Local Sources", 0));
-        label_8->setText(QApplication::translate("inputBox", "Video", 0));
         VideoPath->setText(QString());
-        label_10->setText(QApplication::translate("inputBox", "Audio", 0));
     } // retranslateUi
 
 };
