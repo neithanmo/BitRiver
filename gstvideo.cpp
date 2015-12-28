@@ -107,7 +107,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->audiosinkconvert = gst_element_factory_make("audioconvert","audiosinkconvert");
     this->audioparse = gst_element_factory_make("audioparse", "audiopar");
     pipeline = gst_pipeline_new("pipeline");
-    this->rtmp = gst_element_factory_make("fakesink","rtmp");
+    this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
     this->flvmux = gst_element_factory_make("flvmux","flvmux");
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
@@ -115,7 +115,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
     int keyint = 2*input->framerate;
     QString location = "rtmp://a.rtmp.youtube.com/live2/x/" + input->youtube + "?videoKeyframeFrequency=1&totalDatarate=8128 app=live2 flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2";
-    //g_object_set(this->rtmp, "location", location.toUtf8().constData(), "sync", FALSE, NULL);
+    g_object_set(this->rtmp, "location", location.toUtf8().constData(), "sync", FALSE, NULL);
 
     g_object_set(this->volume, "volume", 0, NULL);
     g_object_set(this->faac, "bitrate", input->abrate, NULL);
