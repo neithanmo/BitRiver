@@ -1,6 +1,6 @@
 # Bitriver
 
-first release of Bitriver
+First release of Bitriver
 With this first version still in development, you can make streaming to youtube
 You can configure this stream, and initially choose the data sources, from the local cameras and sound cards, local file or connect to a streaming server for  get the data
 
