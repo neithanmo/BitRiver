@@ -212,7 +212,7 @@ void inputBox::on_VideoSRC_currentIndexChanged(int index)
          break;
     case 1:
         QMessageBox::information(this,
-                                 "tcp input stream example", "write your ip and port of your audio server on the lineEdit below\n"
+                                 "tcp input stream example", "write your ip and port of your audio and video server on the lineEdit below\n"
                                  "for example: \n 192.168.0.1:6000 ; here the host is 192.168.0.1 and the port is: 6000 ",
                                  QMessageBox::Ok);
         break;
@@ -236,7 +236,7 @@ void inputBox::on_checkBox_clicked(bool checked)
        QDir DevDir("/dev","video*",QDir::Name,QDir::System);
        ui->LocalCamera->addItems(DevDir.entryList());
        QFile file("/proc/asound/cards");
-       g_print("%s \n", "Sound Cards ------------>");
+       printf("%s \n", "Sound Cards ------------>");
        if(file.exists() && file.open(QIODevice::ReadOnly))
        {
            QTextStream in(&file);
@@ -246,7 +246,7 @@ void inputBox::on_checkBox_clicked(bool checked)
                QString part2 = part1.section("[", -1, -1);
                QString part3 = part2.section(" ", 0,0);
                ui->soundCards->addItem(part3);
-               g_print("%s \n", line.toUtf8().constData());
+               printf("%s \n", line.toUtf8().constData());
                line = in.readLine();
            }
            file.close();

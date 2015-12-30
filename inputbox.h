@@ -20,8 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QDir>
 #include<QTextStream>
-#include <glib.h>
-#include <gst/gst.h>
 #include <stdio.h>
 #include <QDebug>
 
@@ -37,13 +35,13 @@ class inputBox : public QDialog
 public:
     explicit inputBox(QWidget *parent = 0);
     ~inputBox();
-    bool local; //isLocal = true ---->> get Local path devices, for videoBIN and audioBIN pipeline
-    int arate, channels,framerate; //audio rate, channels and frame rate for system ettings
+    bool local;
+    int arate, channels,framerate;
     int resolutionX, resolutionY;
-    int vbrate,abrate, videoBIN; //What bin I will to use in my pipeline?
+    int vbrate,abrate, videoBIN;
     QString youtube;
-    QString videotcp, videoPath; //Line edith paths, ip and port or file path
-    QString localCamera, localAudioCard; //local paths for sound cards and video locall cameras
+    QString videotcp, videoPath;
+    QString localCamera, localAudioCard;
     int vport;
 
 private slots:
