@@ -307,16 +307,6 @@
     <string>Saturation</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="lineEdit">
-   <property name="geometry">
-    <rect>
-     <x>50</x>
-     <y>700</y>
-     <width>113</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QSpinBox" name="spinBox">
    <property name="geometry">
     <rect>
@@ -327,7 +317,6 @@
     </rect>
    </property>
   </widget>
-  <zorder>lineEdit</zorder>
   <zorder>spinBox</zorder>
   <zorder>layoutWidget</zorder>
   <zorder>layoutWidget</zorder>
