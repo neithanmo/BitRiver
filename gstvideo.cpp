@@ -1,12 +1,12 @@
 #include "gstvideo.h"
 
 guintptr gstvideo::cam_window_handle;
-static GstElement *pipeline; //= gst_pipeline_new("pipeline");
-static GstElement *curr ;//= gst_element_factory_make("identity", "curr"); //current efect
-static GstPad *blockpad; //source pad de mi fuente
-static GstElement *conv_before;// = gst_element_factory_make("videoconvert", "conv_after");
-static GstElement *conv_after;// = gst_element_factory_make("videoconvert", "conv_after");
-static GstPad *binpad; //ghost pad para el "bin"
+static GstElement *pipeline;
+static GstElement *curr ;
+static GstPad *blockpad;
+static GstElement *conv_before;
+static GstElement *conv_after;
+static GstPad *binpad;
 static GstElement *queue1;
 static GstElement *queue2;
 static GstElement *queue3;
@@ -19,19 +19,17 @@ static GstElement *queue9;
 static GstElement *vdecoder;
 static int effect=0;
 
-//constructor, inicializo el gui, conecto los objetos, inicializo gstreamer,
-//creo los elementos de gstreamer
 gstvideo::gstvideo(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::gstvideo)
 {
 
     ui->setupUi(this);
-    ui->slider1->setRange(-100,100);//contraste 0 -> 2. default=1
+    ui->slider1->setRange(-100,100);//contrast 0 -> 2. default=1
     ui->slider1->setTickPosition(QSlider::TicksAbove);
     ui->slider2->setRange(-100,100);//brillo    -1 -> 1. default=0
     ui->slider2->setTickPosition(QSlider::TicksAbove);
-    ui->slider3->setRange(-100,100);//saturacion 0 -> 2. default=1
+    ui->slider3->setRange(-100,100);//saturation 0 -> 2. default=1
     ui->slider3->setTickPosition(QSlider::TicksAbove);
     ui->slider4->setRange(-100,100);//hue       -1 -> 1. default=0
     ui->slider4->setTickPosition(QSlider::TicksAbove);
@@ -39,17 +37,17 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->slider2->setValue(0);
     ui->slider3->setValue(0);
     ui->slider4->setValue(0);
-    ui->slider5->setRange(0,10);//control del volumen
+    ui->slider5->setRange(0,10);
     ui->slider5->setValue(0);
     ui->slider5->setTickPosition(QSlider::TicksAbove);
     ui->progressBar1->setValue(0);
-    ui->progressBar1->setRange(-100,100);//muestra el valor actual del contraste
+    ui->progressBar1->setRange(-100,100);
     ui->progressBar2->setValue(0);
-    ui->progressBar2->setRange(-100,100);//valor del brillo
+    ui->progressBar2->setRange(-100,100);
     ui->progressBar3->setValue(0);
-    ui->progressBar3->setRange(-100,100);//valor de la saturacion
+    ui->progressBar3->setRange(-100,100);
     ui->progressBar4->setValue(0);
-    ui->progressBar4->setRange(-100,100);//valor del HUE
+    ui->progressBar4->setRange(-100,100);
     ui->comboBox->addItems(QStringList()<<"identity" <<"dicetv"
                             <<"warptv"<<"shagadelictv"<< "revtv"<< "radioactv"<< "rippletv"<<"TehRoxx0r"<<"Cartoon"<<"invert"
                            <<"pixeliz0r"<<"Nervous"<<"Vertigo"<<"Color Distance"<<"perspective"<<"color-B"<<"Baltan"<<"Twolay0r"<<"threelay0r"
@@ -71,20 +69,16 @@ gstvideo::gstvideo(QWidget *parent) :
     g_print("video settings - framerate: %d, video bitrate: %d \n",input->framerate, input->vbrate);
     g_print("audio channels is: %d \n", input->channels);
 
-
-//building all elements and BINS
-
-
     this->conversor1 = gst_element_factory_make("videoconvert", "conversor1");
     this->conv = gst_element_factory_make("audioconvert","aconv");
     this->volume = gst_element_factory_make("volume","volume");
     this->x264enc = gst_element_factory_make("x264enc","x264enc");
     this->h264parse = gst_element_factory_make("h264parse","h264parse");
     this->avdec_h264 = gst_element_factory_make("avdec_h264","avdec_h264");
-    this->sink = gst_element_factory_make("ximagesink", "sink");               //for local view
+    this->sink = gst_element_factory_make("ximagesink", "sink");
     this->videobalance = gst_element_factory_make("videobalance", "balance");
     this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
-    this->faac = gst_element_factory_make("voaacenc","aacAudioencoder");//se cambio avenc_aac por voaacenc, ahora audio branch funcioona
+    this->faac = gst_element_factory_make("voaacenc","aacAudioencoder");
     this->aacparse = gst_element_factory_make("aacparse", "aacparse");
     queue1 = gst_element_factory_make("queue", "queue1");
     queue3 = gst_element_factory_make("queue", "queue3");
