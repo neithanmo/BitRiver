@@ -27,7 +27,7 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->slider1->setRange(-100,100);//contrast 0 -> 2. default=1
     this->setWindowTitle("BitRiver");
     ui->slider1->setTickPosition(QSlider::TicksAbove);
-    ui->slider2->setRange(-100,100);//brillo    -1 -> 1. default=0
+    ui->slider2->setRange(-100,100);//brightness    -1 -> 1. default=0
     ui->slider2->setTickPosition(QSlider::TicksAbove);
     ui->slider3->setRange(-100,100);//saturation 0 -> 2. default=1
     ui->slider3->setTickPosition(QSlider::TicksAbove);
@@ -100,7 +100,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->audiosinkconvert = gst_element_factory_make("audioconvert","audiosinkconvert");
     this->audioparse = gst_element_factory_make("audioparse", "audiopar");
     pipeline = gst_pipeline_new("pipeline");
-    this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
+    this->rtmp = gst_element_factory_make("fakesink","rtmp");
     this->flvmux = gst_element_factory_make("flvmux","flvmux");
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
@@ -350,7 +350,7 @@ gstvideo::gstvideo(QWidget *parent) :
                 gst_element_link_many(queue1, this->scale, this->conversor1,NULL);
                 gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
                 gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->Ltee1, NULL);
-                gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, this->sink, NULL); ;
+                gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
                 gst_element_link_many(queue7, this->x264enc, this->h264parse, queue3, NULL);
                 gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
                 gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume, Ltee2, NULL);
