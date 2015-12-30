@@ -902,8 +902,3 @@ void gstvideo::avolume(int y){
     g_print("%d \n", x);
     gst_stream_volume_set_volume (GST_STREAM_VOLUME(this->volume), GST_STREAM_VOLUME_FORMAT_LINEAR, x);
 }
-
-void gstvideo::on_lineEdit_editingFinished()
-{
-
-}
