@@ -17,8 +17,10 @@
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QProgressBar>
 #include <QtWidgets/QSlider>
+#include <QtWidgets/QSpinBox>
 #include <QtWidgets/QToolButton>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
@@ -58,6 +60,8 @@ public:
     QLabel *label_3;
     QLabel *label_4;
     QLabel *label_5;
+    QLineEdit *lineEdit;
+    QSpinBox *spinBox;
 
     void setupUi(QWidget *gstvideo)
     {
@@ -204,10 +208,18 @@ public:
         label_3->setGeometry(QRect(10, 590, 54, 15));
         label_4 = new QLabel(gstvideo);
         label_4->setObjectName(QStringLiteral("label_4"));
-        label_4->setGeometry(QRect(460, 490, 54, 15));
+        label_4->setGeometry(QRect(460, 480, 77, 27));
         label_5 = new QLabel(gstvideo);
         label_5->setObjectName(QStringLiteral("label_5"));
         label_5->setGeometry(QRect(460, 550, 61, 16));
+        lineEdit = new QLineEdit(gstvideo);
+        lineEdit->setObjectName(QStringLiteral("lineEdit"));
+        lineEdit->setGeometry(QRect(50, 700, 113, 21));
+        spinBox = new QSpinBox(gstvideo);
+        spinBox->setObjectName(QStringLiteral("spinBox"));
+        spinBox->setGeometry(QRect(350, 770, 44, 25));
+        lineEdit->raise();
+        spinBox->raise();
         layoutWidget->raise();
         layoutWidget->raise();
         layoutWidget->raise();
