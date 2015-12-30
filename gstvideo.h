@@ -11,7 +11,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #ifndef GSTVIDEO_H
 #define GSTVIDEO_H
 
@@ -53,6 +52,8 @@ private slots:
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);    
+
+    void on_lineEdit_editingFinished();
 
 private:
     Ui::gstvideo *ui;
