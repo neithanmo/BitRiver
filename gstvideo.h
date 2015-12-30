@@ -46,44 +46,41 @@ public:
 private slots:
     void start();
     void stop();
-    void contrast(int); //slots para llamar a update_color_balance, ya que esta no se puede llamar directamente
-    void brightness(int); //debido a que SIGNALS and SLOTS deben concordar en cuanto a sus parametros
+    void contrast(int);
+    void brightness(int);
     void hue(int);
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);    
-
-    void on_lineEdit_editingFinished();
-
 private:
     Ui::gstvideo *ui;
     WId window;
     inputBox *input = new inputBox;
-    GstCaps *Vcaps; //filtro para visualizar el stream a 640x480
-    GstCaps *Scaps; //resolucion del streaming, la resolucion es definida por el usuario
+    GstCaps *Vcaps;
+    GstCaps *Scaps;
     GstCaps *Acaps;
-    GstCaps *enAcaps; //audio encoding output format
-    GstCaps *enVcaps;//video encoding output format
+    GstCaps *enAcaps;
+    GstCaps *enVcaps;
     GstElement *Vlocalsrc;
-    GstElement *Vtcpsrc; //tcp videosource;
+    GstElement *Vtcpsrc;
     GstElement *Vfilesrc;
-    GstElement *Atcpsrc; //tcp audio source;
-    GstElement *Afilesrc; //file audio source
-    GstElement *conversor1; //videoconvert for visualization
+    GstElement *Atcpsrc;
+    GstElement *Afilesrc;
+    GstElement *conversor1;
     GstElement *conversor2;
     GstElement *videobalance;
     GstElement *sink;
     GstElement *audiosink;
     GstElement *Alocalsrc;
-    GstElement *conv;       //audioconvert
+    GstElement *conv;
     GstElement *audiosampler;
     GstElement *videosinkconvert;
     GstElement *videorate;
     GstElement *audiorate;
     GstElement *audiosinkconvert;
     GstElement *audioparse;
-    GstElement *abin;       //audio bin, para captura de microfono, control de volumen
-    GstElement *vV4L2bin;   //video local camera source bin
+    GstElement *abin;
+    GstElement *vV4L2bin;
     GstElement *volume;
     GstElement *aacparse;
     GstElement *x264enc;
@@ -92,17 +89,17 @@ private:
     GstElement *tcpclientsrc;
     GstElement *avdec_h264;
     GstElement *flvmux;
-    GstElement *Ltee1; //tee for video
-    GstElement *Ltee2;//tee for audio
+    GstElement *Ltee1;
+    GstElement *Ltee2;
     GstElement *rtmp;
     GstElement *scale;
     GstElement *Vscale;
 
     GstBus *bus;
     GMainLoop *loop;
-    QString videopath, audiopath, youkey;//path al archivo y key para youtube
+    QString videopath, audiopath, youkey;
     bool audioSame;
-    static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);//window sync
+    static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);
     static guintptr cam_window_handle;
     void update_color_channel (gchar*, gint, GstColorBalance*);
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
