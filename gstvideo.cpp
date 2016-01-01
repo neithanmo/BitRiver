@@ -95,12 +95,13 @@ gstvideo::gstvideo(QWidget *parent) :
     this->Ltee1 = gst_element_factory_make("tee","tee1");//video branch tee for visualization
     this->scale = gst_element_factory_make("videoscale","scale");//for video streaming settings
     this->videosinkconvert = gst_element_factory_make("videoconvert", "vsinkconvert");
+    this->Svideoconvert = gst_element_factory_make("videoconvert", "sconvert");
     this->videorate = gst_element_factory_make("videorate", "videorate");
     this->audiorate = gst_element_factory_make("audiorate", "audiorate");
     this->audiosinkconvert = gst_element_factory_make("audioconvert","audiosinkconvert");
     this->audioparse = gst_element_factory_make("audioparse", "audiopar");
     pipeline = gst_pipeline_new("pipeline");
-    this->rtmp = gst_element_factory_make("fakesink","rtmp");
+    this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
     this->flvmux = gst_element_factory_make("flvmux","flvmux");
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
@@ -120,14 +121,13 @@ gstvideo::gstvideo(QWidget *parent) :
     g_object_set(this->flvmux, "streamable", TRUE, NULL);
 
     this->Vcaps = gst_caps_new_simple("video/x-raw",
-                                      "format", G_TYPE_STRING, "BGRA",
+                                      //"format", G_TYPE_STRING, "BGRA",
                                       //"framerate", GST_TYPE_FRACTION, 25, 1,
                                       "interlace-mode", G_TYPE_STRING, "progressive",
                                       "width", G_TYPE_INT, 640,
                                       "height", G_TYPE_INT, 480,
                                        NULL);
     this->Scaps = gst_caps_new_simple("video/x-raw",
-                                      "format", G_TYPE_STRING, "BGRA",
                                       //"framerate", GST_TYPE_FRACTION, 25, 1,
                                       "interlace-mode", G_TYPE_STRING, "progressive",
                                       "width", G_TYPE_INT, input->resolutionX,
@@ -337,9 +337,11 @@ gstvideo::gstvideo(QWidget *parent) :
                 blockpad = gst_element_get_static_pad(queue1, "src");
 
                 this->Vscale = gst_element_factory_make("videoscale","Vscale");
+                this->Sscale = gst_element_factory_make("videoscale","Sscale");
 
                 gst_bin_add_many(GST_BIN(pipeline), this->Vtcpsrc, vdecoder, queue1, this->scale, this->conversor1,
-                                 this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7,this->x264enc,
+                                 this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7, this->Sscale,
+                                 this->Svideoconvert,this->x264enc,
                                  this->h264parse, queue3, this->flvmux, queue4,
                                  this->rtmp, queue2,this->conv, this->audiosampler, this->volume, this->Ltee2,
                                  queue9, this->faac, this->aacparse, queue5,
@@ -347,11 +349,13 @@ gstvideo::gstvideo(QWidget *parent) :
                                  queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
 
                 gst_element_link_many(this->Vtcpsrc, vdecoder, NULL);
-                gst_element_link_many(queue1, this->scale, this->conversor1,NULL);
-                gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
-                gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->Ltee1, NULL);
-                gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
-                gst_element_link_many(queue7, this->x264enc, this->h264parse, queue3, NULL);
+                gst_element_link_many(queue1, this->scale, this->conversor1, this->videobalance,
+                                      conv_before, curr, conv_after,this->Ltee1, NULL);
+                gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, NULL);
+                gst_element_link_filtered(this->videosinkconvert, this->sink, this->Vcaps);
+                gst_element_link_many(queue7, this->Sscale, this->Svideoconvert, NULL);
+                gst_element_link_filtered (this->Svideoconvert, this->x264enc ,this->Scaps);
+                gst_element_link_many(this->x264enc, this->h264parse, queue3, NULL);
                 gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
                 gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume, Ltee2, NULL);
                 gst_element_link_many(queue8, this->audiosinkconvert, this->audiosink, NULL);
@@ -465,10 +469,12 @@ gstvideo::gstvideo(QWidget *parent) :
                             blockpad = gst_element_get_static_pad(queue1, "src");
                             vdecoder = gst_element_factory_make("decodebin","vdecodebin");
                             this->Vscale = gst_element_factory_make("videoscale","Vscale");
+                            this->Sscale = gst_element_factory_make("videoscale","Sscale");
                             this->Vfilesrc = gst_element_factory_make("filesrc", "Vtcpsrc");
                             g_object_set(this->Vfilesrc, "location", input->videoPath.toUtf8().constData(), "do-timestamp", TRUE, NULL);
                             gst_bin_add_many(GST_BIN(pipeline), this->Vfilesrc, vdecoder, queue1, this->scale, this->conversor1,
-                                             this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7,this->x264enc,
+                                             this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7, this->Sscale,
+                                             this->Svideoconvert,this->x264enc,
                                              this->h264parse, queue3, this->flvmux, queue4,
                                              this->rtmp, queue2,this->conv, this->audiosampler, this->volume, this->Ltee2,
                                              queue9, this->faac, this->aacparse, queue5,
@@ -476,11 +482,13 @@ gstvideo::gstvideo(QWidget *parent) :
                                              queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
 
                             gst_element_link(this->Vfilesrc, vdecoder);
-                            gst_element_link_many(queue1, this->scale, this->conversor1,NULL);
-                            gst_element_link_filtered (this->conversor1,this->videobalance ,this->Scaps);
-                            gst_element_link_many(this->videobalance,conv_before, curr, conv_after,this->Ltee1, NULL);
-                            gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
-                            gst_element_link_many(queue7, this->x264enc, this->h264parse, queue3, NULL);
+                            gst_element_link_many(queue1, this->scale, this->conversor1, this->videobalance,
+                                                  conv_before, curr, conv_after,this->Ltee1, NULL);
+                            gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, NULL);
+                            gst_element_link_filtered(this->videosinkconvert, this->sink, this->Vcaps);
+                            gst_element_link_many(queue7, this->Sscale, this->Svideoconvert, NULL);
+                            gst_element_link_filtered (this->Svideoconvert, this->x264enc ,this->Scaps);
+                            gst_element_link_many(this->x264enc, this->h264parse, queue3, NULL);
                             gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
                             gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume, Ltee2, NULL);
                             gst_element_link_many(queue8, this->audiosinkconvert, this->audiosink, NULL);
