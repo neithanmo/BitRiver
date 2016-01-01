@@ -94,6 +94,10 @@ private:
     GstElement *rtmp;
     GstElement *scale;
     GstElement *Vscale;
+    GstElement *Sscale;
+    GstElement *Svideoconvert;
+    GstElement *Svideoconvert2;
+
 
     GstBus *bus;
     GMainLoop *loop;
