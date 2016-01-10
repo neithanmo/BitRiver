@@ -77,7 +77,7 @@ private:
     GstElement *videosinkconvert;
     GstElement *videorate;
     GstElement *audiorate;
-    GstElement *audiosinkconvert;
+    //GstElement *audiosinkconvert;
     GstElement *audioparse;
     GstElement *abin;
     GstElement *vV4L2bin;
