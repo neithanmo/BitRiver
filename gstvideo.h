@@ -52,6 +52,8 @@ private slots:
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);    
+    void on_widget_destroyed();
+
 private:
     Ui::gstvideo *ui;
     WId window;
