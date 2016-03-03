@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "inputbox.h"
 #include <string.h>
 
+
 namespace Ui {
 class gstvideo;
 //class gstaudio;
@@ -52,8 +53,6 @@ private slots:
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);    
-    void on_widget_destroyed();
-
 private:
     Ui::gstvideo *ui;
     WId window;
