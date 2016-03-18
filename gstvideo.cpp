@@ -114,7 +114,7 @@ gstvideo::gstvideo(QWidget *parent) :
     g_object_set(this->volume, "volume", 0, NULL);
     g_object_set(this->faac, "bitrate", input->abrate, NULL);
     g_object_set(this->x264enc, "bitrate", input->vbrate, "key-int-max", keyint, "bframes", 0, "byte-stream", false, "aud", true,
-                 "threads", 4, "speed-preset", 1, "pass", 17, NULL);
+                 "threads", 1, "speed-preset", 1, "pass", 17, NULL);
     g_object_set(this->sink, "sync", TRUE, NULL);
     g_object_set(this->audiosink, "sync", TRUE, NULL);
     g_object_set(this->audioparse, "rate", input->arate, "channels", input->channels, NULL);
@@ -187,7 +187,7 @@ gstvideo::gstvideo(QWidget *parent) :
         qDebug()<<"the sound card is " << audioDevice;
         qDebug()<<"video device is " << videoDevice;
         g_object_set(this->Vlocalsrc, "do-timestamp", TRUE, "device", videoDevice.toUtf8().constData(), NULL);
-        g_object_set(this->Alocalsrc, "do-timestamp", TRUE, "device", audioDevice.toUtf8().constData(), NULL);
+        g_object_set(this->Alocalsrc, "do-timestamp", TRUE, "provide-clock", FALSE, "device", audioDevice.toUtf8().constData(), NULL);
 
         blockpad = gst_element_get_static_pad(this->Vlocalsrc, "src");
                                    //audio local bin
@@ -349,12 +349,14 @@ gstvideo::gstvideo(QWidget *parent) :
                                  queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
 
                 gst_element_link_many(this->Vtcpsrc, vdecoder, NULL);
-                gst_element_link_many(queue1, this->scale, this->conversor1, this->videobalance,
-                                      conv_before, curr, conv_after,this->Ltee1, NULL);
+                gst_element_link_many(queue1, this->scale, this->conversor1,NULL);
+                gst_element_link_filtered (this->conversor1, this->videobalance ,this->Scaps);
+                gst_element_link_many(this->videobalance,
+                                      conv_before, curr, conv_after,this->Ltee1, NULL);  
                 gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, NULL);
                 gst_element_link_filtered(this->videosinkconvert, this->sink, this->Vcaps);
                 gst_element_link_many(queue7, this->Sscale, this->Svideoconvert, NULL);
-                gst_element_link_filtered (this->Svideoconvert, this->x264enc ,this->Scaps);
+                gst_element_link(this->Svideoconvert, this->x264enc);
                 gst_element_link_many(this->x264enc, this->h264parse, queue3, NULL);
                 gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
                 gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume, Ltee2, NULL);
@@ -482,12 +484,14 @@ gstvideo::gstvideo(QWidget *parent) :
                                              queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
 
                             gst_element_link(this->Vfilesrc, vdecoder);
-                            gst_element_link_many(queue1, this->scale, this->conversor1, this->videobalance,
+                            gst_element_link_many(queue1, this->scale, this->conversor1,NULL);
+                            gst_element_link_filtered (this->conversor1, this->videobalance ,this->Scaps);
+                            gst_element_link_many(this->videobalance,
                                                   conv_before, curr, conv_after,this->Ltee1, NULL);
                             gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, NULL);
                             gst_element_link_filtered(this->videosinkconvert, this->sink, this->Vcaps);
                             gst_element_link_many(queue7, this->Sscale, this->Svideoconvert, NULL);
-                            gst_element_link_filtered (this->Svideoconvert, this->x264enc ,this->Scaps);
+                            gst_element_link(this->Svideoconvert, this->x264enc);
                             gst_element_link_many(this->x264enc, this->h264parse, queue3, NULL);
                             gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
                             gst_element_link_many(queue2, this->conv, this->audiosampler, this->volume, Ltee2, NULL);
@@ -871,7 +875,7 @@ void gstvideo::stop()
 {
     if (pipeline != NULL)
     {
-        gst_element_change_state(pipeline, GST_STATE_CHANGE_PLAYING_TO_PAUSED);
+        gst_element_set_state(pipeline, GST_STATE_NULL);
         qDebug()<<"the Pipeline State is changing to Paused";
 ;
     }
