@@ -77,7 +77,7 @@ gstvideo::gstvideo(QWidget *parent) :
     this->h264parse = gst_element_factory_make("h264parse","h264parse");
     this->avdec_h264 = gst_element_factory_make("avdec_h264","avdec_h264");
     this->sink = gst_element_factory_make("ximagesink", "sink");
-    this->videobalance = gst_element_factory_make("videobalance", "balance");
+    this->videobalance = gst_element_factory_make("videobalance", "balance");// ########################
     this->audiosink = gst_element_factory_make("autoaudiosink", "ausink");
     this->faac = gst_element_factory_make("voaacenc","aacAudioencoder");
     this->aacparse = gst_element_factory_make("aacparse", "aacparse");
@@ -101,7 +101,7 @@ gstvideo::gstvideo(QWidget *parent) :
     //this->audiosinkconvert = gst_element_factory_make("audioconvert","audiosinkconvert");
     this->audioparse = gst_element_factory_make("audioparse", "audiopar");
     pipeline = gst_pipeline_new("pipeline");
-    this->rtmp = gst_element_factory_make("rtmpsink","rtmp");
+    this->rtmp = gst_element_factory_make("fakesink","rtmp");
     this->flvmux = gst_element_factory_make("flvmux","flvmux");
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
@@ -813,54 +813,68 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gpoi
 
 void gstvideo::videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer user_data) {
     g_print("entering into padd-added video function: ");
-    GstPad *sink_pad = gst_element_get_static_pad (queue2, "sink"); // pad for audio pipeline, the same data source
-  GstPad *sink_pad_video = gst_element_get_static_pad(queue1, "sink");
+    Q_UNUSED(src);
+    Q_UNUSED(user_data);
+    GstPad *sinkpad = NULL;//gst_element_get_static_pad (queue2, "sink"); // pad for audio pipeline, the same data source
+  //GstPad *sink_pad_video = gst_element_get_static_pad(queue1, "sink");
   GstPadLinkReturn ret;
   GstCaps *new_pad_caps = NULL;
+  //GstCaps *caps;
   GstStructure *new_pad_struct = NULL;
-  const gchar *new_pad_type = NULL;
-
-  g_print ("Received new pad '%s' from '%s':\n", GST_PAD_NAME (new_pad), GST_ELEMENT_NAME (src));
-
-
-  if (gst_pad_is_linked (sink_pad)) {
-    g_print ("  We are already linkeIgnoring.\n");
-    goto exit;
-  }
-  /* Check the new pad's type */
+  //const gchar *new_pad_type = NULL;
   new_pad_caps = gst_pad_get_current_caps(new_pad);
   new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
-  new_pad_type = gst_structure_get_name (new_pad_struct);
 
-  if ((g_str_has_prefix (new_pad_type, "audio/x-raw"))) {
-    ret = gst_pad_link (new_pad, sink_pad);
-    if (GST_PAD_LINK_FAILED (ret)) {
-      g_print ("  Type is '%s' but link failed.\n", new_pad_type);
-    } else {
-      g_print ("  Link succeeded (type '%s').\n", new_pad_type);
-    }
+  //g_print ("Received new pad '%s' from '%s':\n", GST_PAD_NAME (new_pad), GST_ELEMENT_NAME (src));
+ if (g_strrstr (gst_structure_get_name (new_pad_struct), "video"))
+        sinkpad = gst_element_get_static_pad(queue1, "sink");
 
-  } else if (g_str_has_prefix (new_pad_type, "video/x-raw")) {
-     /* Attempt the link */
-    ret = gst_pad_link (new_pad, sink_pad_video);
-    if (GST_PAD_LINK_FAILED (ret)) {
-      g_print ("  Type is '%s' but link failed.\n", new_pad_type);
-    } else {
-      g_print ("  Link succeeded (type '%s').\n", new_pad_type);
-    }
-  } else {
-    g_print ("  It has type '%s' which is not raw video. Ignoring.\n", new_pad_type);
-    goto exit;
-  }
+    else
+        sinkpad = gst_element_get_static_pad (queue2, "sink");
 
-exit:
-  /* Unreference the new pad's caps, if we got them */
-  if (new_pad_caps != NULL)
     gst_caps_unref (new_pad_caps);
 
-  /* Unreference the sink pad */
-    gst_object_unref (sink_pad);
-  gst_object_unref (sink_pad_video);
+    gst_pad_link (new_pad, sinkpad);
+    gst_object_unref (sinkpad);
+
+//   if (gst_pad_is_linked (sink_pad)) {
+//     g_print ("  We are already linkeIgnoring.\n");
+//     goto exit;
+//   }
+//   /* Check the new pad's type */
+//   new_pad_caps = gst_pad_get_current_caps(new_pad);
+//   new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
+//   new_pad_type = gst_structure_get_name (new_pad_struct);
+// 
+//   if ((g_str_has_prefix (new_pad_type, "audio/x-raw"))) {
+//     ret = gst_pad_link (new_pad, sink_pad);
+//     if (GST_PAD_LINK_FAILED (ret)) {
+//       g_print ("  Type is '%s' but link failed.\n", new_pad_type);
+//     } else {
+//       g_print ("  Link succeeded (type '%s').\n", new_pad_type);
+//     }
+// 
+//   } else if (g_str_has_prefix (new_pad_type, "video/x-raw")) {
+//      /* Attempt the link */
+//     ret = gst_pad_link (new_pad, sink_pad_video);
+//     if (GST_PAD_LINK_FAILED (ret)) {
+//       g_print ("  Type is '%s' but link failed.\n", new_pad_type);
+//     } else {
+//       g_print ("  Link succeeded (type '%s').\n", new_pad_type);
+//     }
+//   } else {
+//     g_print ("  It has type '%s' which is not raw video. Ignoring.\n", new_pad_type);
+//     goto exit;
+//   }
+// 
+// exit:
+//   /* Unreference the new pad's caps, if we got them */
+//   if (new_pad_caps != NULL)
+//     gst_caps_unref (new_pad_caps);
+// 
+//   /* Unreference the sink pad */
+//     gst_object_unref (sink_pad);
+//   gst_object_unref (sink_pad_video);
 }
 
 // ##################################### SLOTS #############################################################################
