@@ -27,11 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_gstvideo.h"
 #include "inputbox.h"
 #include <string.h>
+#include "gstvideo.h"//for moc compiling happiness
 
 
 namespace Ui {
 class gstvideo;
-//class gstaudio;
+
 }
 //..
 
@@ -44,6 +45,9 @@ public:
     ~gstvideo();
 
 
+
+
+
 private slots:
     void start();
     void stop();
@@ -52,7 +56,7 @@ private slots:
     void hue(int);
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
-    void avolume(int);    
+    void avolume(int);
 private:
     Ui::gstvideo *ui;
     WId window;
@@ -62,11 +66,7 @@ private:
     GstCaps *Acaps;
     GstCaps *enAcaps;
     GstCaps *enVcaps;
-    GstElement *Vlocalsrc;
     GstElement *Vtcpsrc;
-    GstElement *Vfilesrc;
-    GstElement *Atcpsrc;
-    GstElement *Afilesrc;
     GstElement *conversor1;
     GstElement *conversor2;
     GstElement *videobalance;
@@ -78,10 +78,7 @@ private:
     GstElement *videosinkconvert;
     GstElement *videorate;
     GstElement *audiorate;
-    //GstElement *audiosinkconvert;
     GstElement *audioparse;
-    GstElement *abin;
-    GstElement *vV4L2bin;
     GstElement *volume;
     GstElement *aacparse;
     GstElement *x264enc;
@@ -98,20 +95,38 @@ private:
     GstElement *Sscale;
     GstElement *Svideoconvert;
     GstElement *Svideoconvert2;
+    GstElement *queue1;
+    GstElement *queue2;
+    GstElement *queue3;
+    GstElement *queue4;
+    GstElement *queue5;
+    GstElement *queue6;
+    GstElement *queue7;
+    GstElement *queue8;
+    GstElement *queue9;
+    GstElement *pipeline;
+    GstElement *curr ;
+    GstElement *conv_before;
+    GstElement *conv_after;
+    GstElement *vdecoder;
+    GstElement *inputselector;
+    GstElement *audiomixer;
 
 
     GstBus *bus;
     GMainLoop *loop;
     QString videopath, audiopath, youkey;
     bool audioSame;
-    static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gpointer);
-    static guintptr cam_window_handle;
     void update_color_channel (gchar*, gint, GstColorBalance*);
-    static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-    static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gpointer user_data);
-    static gboolean to_block_src(gpointer user_data);
-    static void callback(GstBus  *bus, GstMessage *msg, gpointer user_data);
-    static void videoPad_added_handler(GstElement *src, GstPad *new_pad, gpointer user_data);
+
+    static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gstvideo *v);
+    static guintptr cam_window_handle;
+    static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
+    static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
+    static void callback(GstBus  *bus, GstMessage *msg, gstvideo *v);
+    static void videoPad_added_handler(GstElement *src, GstPad *new_pad, gstvideo *v);
+
+
 
 };
 
