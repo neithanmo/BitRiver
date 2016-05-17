@@ -21,13 +21,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <gst/video/videooverlay.h>
 #include <QMessageBox>
 #include <QSlider>
+#include <QObject>
 #include <math.h>
 #include <QLineEdit>
 #include <gst/audio/streamvolume.h>
+#include <string.h>
 #include "ui_gstvideo.h"
 #include "inputbox.h"
-#include <string.h>
 #include "gstvideo.h"//for moc compiling happiness
+#include "localdata.h"
 
 
 namespace Ui {
@@ -66,7 +68,11 @@ private:
     GstCaps *Acaps;
     GstCaps *enAcaps;
     GstCaps *enVcaps;
+    GstElement *Vlocalsrc;
     GstElement *Vtcpsrc;
+    GstElement *Vfilesrc;
+    GstElement *Atcpsrc;
+    GstElement *Afilesrc;
     GstElement *conversor1;
     GstElement *conversor2;
     GstElement *videobalance;
@@ -79,6 +85,8 @@ private:
     GstElement *videorate;
     GstElement *audiorate;
     GstElement *audioparse;
+    GstElement *abin;
+    GstElement *vV4L2bin;
     GstElement *volume;
     GstElement *aacparse;
     GstElement *x264enc;
@@ -109,8 +117,6 @@ private:
     GstElement *conv_before;
     GstElement *conv_after;
     GstElement *vdecoder;
-    GstElement *inputselector;
-    GstElement *audiomixer;
 
 
     GstBus *bus;
