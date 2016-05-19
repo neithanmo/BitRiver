@@ -403,8 +403,7 @@ compiler_moc_header_clean:
 	-$(DEL_FILE) moc_gstvideo.cpp moc_inputbox.cpp
 moc_gstvideo.cpp: src/ui_gstvideo.h \
 		src/inputbox.h \
-		localcamera.h \
-		datasrc.h \
+		src/datasrc.h \
 		src/gstvideo.h
 	/usr/lib/x86_64-linux-gnu/qt5/bin/moc $(DEFINES) -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64 -I/home/neithan/gstreamer/gstvideo -I/home/neithan/gstreamer/gstvideo -I/home/neithan/gstreamer/gstvideo/scripts -I/usr/local/include/gstreamer-1.0 -I/usr/local/lib/gstreamer-1.0/include -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/5 -I/usr/include/x86_64-linux-gnu/c++/5 -I/usr/include/c++/5/backward -I/usr/lib/gcc/x86_64-linux-gnu/5/include -I/usr/local/include -I/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed -I/usr/include/x86_64-linux-gnu -I/usr/include src/gstvideo.h -o moc_gstvideo.cpp
 
@@ -435,15 +434,13 @@ compiler_clean: compiler_moc_header_clean compiler_uic_clean
 gstvideo.o: src/gstvideo.cpp src/gstvideo.h \
 		src/ui_gstvideo.h \
 		src/inputbox.h \
-		localcamera.h \
-		datasrc.h
+		src/datasrc.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o gstvideo.o src/gstvideo.cpp
 
 main.o: src/main.cpp src/gstvideo.h \
 		src/ui_gstvideo.h \
 		src/inputbox.h \
-		localcamera.h \
-		datasrc.h
+		src/datasrc.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o src/main.cpp
 
 inputbox.o: src/inputbox.cpp src/inputbox.h \
@@ -451,7 +448,7 @@ inputbox.o: src/inputbox.cpp src/inputbox.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o inputbox.o src/inputbox.cpp
 
 localdata.o: src/localdata.cpp src/localdata.h \
-		datasrc.h
+		src/datasrc.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o localdata.o src/localdata.cpp
 
 moc_gstvideo.o: moc_gstvideo.cpp 
