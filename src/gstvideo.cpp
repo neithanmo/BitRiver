@@ -165,8 +165,14 @@ gstvideo::gstvideo(QWidget *parent) :
 
     if(input->local)
     {
-        localData *localv;
+        //###############################################################
 
+        localData *localv = new localData;//= new localData();
+        Datasrc *dsrc = localv;
+
+        //##############################################################
+
+        g_print("aqui estamos señores \n");
         //if local is selected, set the local objects
         this->abin = gst_bin_new("abin");
         this->vV4L2bin = gst_bin_new("vV4L2bin");
@@ -179,19 +185,23 @@ gstvideo::gstvideo(QWidget *parent) :
         g_object_set(this->Vlocalsrc, "do-timestamp", TRUE, "device", videoDevice.toUtf8().constData(), NULL);
         g_object_set(this->Alocalsrc, "do-timestamp", TRUE, "provide-clock", FALSE, "device", audioDevice.toUtf8().constData(), NULL);
 
-        blockpad = gst_element_get_static_pad(this->Vlocalsrc, "src");
+        blockpad = gst_element_get_static_pad(dsrc->get_bin(), "videosrc");
                                    //audio local bin
         gst_bin_add_many(GST_BIN(this->abin), this->Alocalsrc, this->audiorate, this->conv, this->audioparse, this->volume, NULL);
         gst_element_link_many(this->Alocalsrc, this->audiorate,this->conv, NULL);
                         //ghostpad for my audio bin
         gst_element_link_filtered(this->conv, this->audioparse, this->Acaps);
         gst_element_link(this->audioparse, this->volume);
-         gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
+        gst_element_add_pad (this->abin, gst_ghost_pad_new ("src", binpad));
 
-        gst_bin_add_many(GST_BIN(this->vV4L2bin), this->Vlocalsrc, this->videorate, this->conversor1,this->scale,
+        gst_bin_add_many(GST_BIN(this->vV4L2bin), GST_ELEMENT(dsrc->get_bin()), this->videorate, this->conversor1,this->scale,
                          this->videobalance, NULL);
-
-        gst_element_link_many(this->Vlocalsrc, this->videorate, this->conversor1, this->scale, NULL);
+        GstPad *pd = gst_element_get_static_pad(dsrc->get_bin(),"videosrc");
+        GstPad *pd2 = gst_element_get_static_pad(this->videorate,"sink");
+        gst_pad_link(pd,pd2);
+        g_print("brackpoint1: añadiendo objeto LocalData al pipeline \n");
+        //gst_element_link_many(this->Vlocalsrc, this->videorate, this->conversor1, this->scale, NULL);
+        gst_element_link_many(this->videorate, this->conversor1, this->scale, NULL);
         gst_element_link_filtered (this->scale,this->videobalance ,this->Scaps);//Streaming caps
         gst_element_add_pad (this->vV4L2bin, gst_ghost_pad_new ("src", pad));
 
@@ -202,6 +212,10 @@ gstvideo::gstvideo(QWidget *parent) :
                          queue9, this->faac, this->aacparse, queue5,
                          queue8, this->audiosink,
                          queue6, this->videosinkconvert, this->sink, NULL);
+         //verificando
+        g_print("brackpoint2: se añadio el objeto - no problemas y linked \n");
+        //if(gst_element_link_pads(dsrc->databin,"videosrc",conv_before,"sink")) g_print("PADS LINKED\n");
+        //gst_element_link_many(conv_before, curr, conv_after, this->Ltee1, NULL);//tee1 for video visualization
 
         gst_element_link_many(this->vV4L2bin,conv_before, curr, conv_after, this->Ltee1, NULL);//tee1 for video visualization
                                                                                                 //and streaming branch
@@ -323,6 +337,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
             {
                 this->vdecoder = gst_element_factory_make("decodebin","vdecodebin");
+                g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), this);
                 this->Vtcpsrc = gst_element_factory_make("tcpclientsrc", "Vtcpsrc");
                 g_object_set(this->Vtcpsrc, "host", input->videotcp.toUtf8().constData(), "port", input->vport,NULL);
 
@@ -462,6 +477,7 @@ gstvideo::gstvideo(QWidget *parent) :
                    {
                             blockpad = gst_element_get_static_pad(queue1, "src");
                             vdecoder = gst_element_factory_make("decodebin","vdecodebin");
+                            g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), this);
                             this->Vscale = gst_element_factory_make("videoscale","Vscale");
                             this->Sscale = gst_element_factory_make("videoscale","Sscale");
                             this->Vfilesrc = gst_element_factory_make("filesrc", "Vtcpsrc");
@@ -594,11 +610,13 @@ gstvideo::gstvideo(QWidget *parent) :
 
 
     }//end of else for input->isLocal evaluation
+    g_print("BREAKPOINT3: ventana\n");
 
     window = ui->widget->winId();
-
     cam_window_handle=window;
+
     this->bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+
     gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, this, NULL);
     gst_object_unref (this->bus);
 
@@ -612,8 +630,10 @@ gstvideo::gstvideo(QWidget *parent) :
     connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(avolume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
-    g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), this);//### REVISAR AQUI PARA VER EL vdecoder
+    //g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), this);//### REVISAR AQUI PARA VER EL vdecoder
+
     g_signal_connect(mbus, "message::error", G_CALLBACK(callback), this);
+    g_print("BREAKPOINT4: fin constructor\n");
 
     delete input;
 }
