@@ -14,11 +14,15 @@ INCLUDEPATH += . scripts
 HEADERS += src/gstvideo.h \
             src/ui_gstvideo.h \
     src/inputbox.h \
-    src/ui_inputbox.h
+    src/ui_inputbox.h \
+    src/datasrc.h \
+    src/localdata.h
+
 FORMS += gstvideo.ui \
          inputbox.ui
 SOURCES += src/gstvideo.cpp src/main.cpp \
-    src/inputbox.cpp
+    src/inputbox.cpp \
+    src/localdata.cpp
 
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += gstreamer-1.0
