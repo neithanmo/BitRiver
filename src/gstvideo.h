@@ -135,7 +135,6 @@ private:
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static void callback(GstBus  *bus, GstMessage *msg, gstvideo *v);
-    static void pad_added(GstElement *src, GstPad *new_pad, gstvideo *v);
     void configure();
     void addSource();
 

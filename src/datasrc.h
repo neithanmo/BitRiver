@@ -35,7 +35,7 @@ protected:
     }
 
 
-
+    static void pad_added(GstElement *src, GstPad *new_pad, Datasrc *v);
     //static void bus_callback(GstBus *ebus, GstMessage *msg, Datasrc *data);
 
 };

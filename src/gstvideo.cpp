@@ -180,7 +180,7 @@ gstvideo::gstvideo(QWidget *parent) :
     //g_signal_connect(vdecoder, "pad-added", G_CALLBACK(videoPad_added_handler), this);//### REVISAR AQUI PARA VER EL vdecoder
     configure();
     g_signal_connect(mbus, "message::error", G_CALLBACK(callback), this);
-    g_signal_connect(dsrc.front().decoder, "pad-added", G_CALLBACK(pad_added), this);
+
 
     g_print("BREAKPOINT4: fin constructor\n");
     delete input;
@@ -199,42 +199,24 @@ void gstvideo::configure(){
     bool loop = true;
     std::string location = "/home/neithan/panaflat.avi";
     std::string device = "/dev/video0";
-    Datasrc src(location,loop);
+    //Datasrc src = new Datasrc(location,loop); //no es correcta esta conversion, se requiere c++ ++11
     Datasrc src2(device);
-    dsrc.push_back(src);
+    dsrc.push_back(src2);
+    //dsrc.push_back(src);
+    source = new Datasrc(location, loop);//si trabaja
+    //source = dsrc.back(); not work
     //GstElement *databin = dsrc.front().get_bin();
-    gst_bin_add_many(GST_BIN(pipeline), dsrc.front().get_bin(),queue1, this->scale, this->conversor1,
+    gst_bin_add_many(GST_BIN(pipeline), source->get_bin(),queue1, this->scale, this->conversor1,
                                                          this->videobalance, conv_before, curr, conv_after,this->sink, NULL);
     gst_element_link_many(queue1,this->scale,this->conversor1,this->videobalance,
                           conv_before,curr,conv_after,this->sink,NULL);
     //gst_bin_add(GST_BIN(pipeline), GST_ELEMENT(dsrc.front().get_bin()));
-    GstPad *pd = gst_element_get_static_pad(dsrc.front().get_bin(),"videosrc");
+    GstPad *pd = gst_element_get_static_pad(source->get_bin(),"videosrc");
     GstPad *pd2 = gst_element_get_static_pad(queue1,"sink");
     gst_pad_link(pd,pd2);
+    g_signal_connect(source->decoder, "pad-added", G_CALLBACK(source->pad_added), source);//callback to a pad_add member of Datasrc
     g_object_unref(pd);
     g_object_unref(pd2);
-}
-
-void gstvideo::pad_added(GstElement *src, GstPad *new_pad, gstvideo *v) {
-    //Q_UNUSED(src);
-    g_print("entering into padd-added video function: \n");
-    GstPad *sinkpad = NULL;
-    GstPadLinkReturn ret;
-    GstCaps *new_pad_caps = NULL;
-    GstStructure *new_pad_struct = NULL;
-    new_pad_caps = gst_pad_get_current_caps(new_pad);
-    new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
-
-
-    if (g_strrstr (gst_structure_get_name (new_pad_struct), "video")){ //checking if there is video caps
-         g_print("new video pad added \n");
-         sinkpad = gst_element_get_static_pad(v->dsrc.front().vqueue, "sink");
-    }
-    else
-         sinkpad = gst_element_get_static_pad (v->dsrc.front().aqueue, "sink"); //it is a audio caps structure
-    gst_caps_unref (new_pad_caps);
-    gst_pad_link (new_pad, sinkpad);
-    gst_object_unref (sinkpad);
 }
 
 
@@ -428,6 +410,7 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gstv
 void gstvideo::start()
 {
     gst_element_set_state (this->pipeline, GST_STATE_PLAYING);
+    g_main_loop_run(loop);
     qDebug()<<"the Pipeline State is changing to playing STATE";
 }
 
@@ -436,6 +419,7 @@ void gstvideo::stop()
     if (pipeline != NULL)
     {
         gst_element_set_state(this->pipeline, GST_STATE_NULL);
+        g_main_loop_quit(loop);
         qDebug()<<"the Pipeline State is changing to Paused";
 ;
     }

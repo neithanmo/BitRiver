@@ -58,6 +58,30 @@ Datasrc::~Datasrc(){
     //g_object_unref(databin);
 }
 
+void Datasrc::pad_added(GstElement *src, GstPad *new_pad, Datasrc *v) {
+    //Q_UNUSED(src);
+    g_print("entering into padd-added video function: \n");
+    GstPad *sinkpad = NULL;
+    GstPadLinkReturn ret;
+    GstCaps *new_pad_caps = NULL;
+    GstStructure *new_pad_struct = NULL;
+    new_pad_caps = gst_pad_get_current_caps(new_pad);
+    new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
+
+
+    if (g_strrstr (gst_structure_get_name (new_pad_struct), "video")){ //checking if there is video caps
+         g_print("new video pad added \n");
+         sinkpad = gst_element_get_static_pad(v->vqueue, "sink");
+         g_print("linked new pad with a peer done \n");
+    }
+    else
+         sinkpad = gst_element_get_static_pad (v->aqueue, "sink"); //it is a audio caps structure
+    gst_caps_unref (new_pad_caps);
+    gst_pad_link (new_pad, sinkpad);
+    gst_object_unref (sinkpad);
+}
+
+
 
 //void Datasrc::bus_callback(GstBus *ebus, GstMessage *msg, Datasrc *data)
 //{
