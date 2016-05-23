@@ -26,10 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLineEdit>
 #include <gst/audio/streamvolume.h>
 #include <string.h>
+#include <vector>
 #include "ui_gstvideo.h"
 #include "inputbox.h"
 #include "gstvideo.h"//for moc compiling happiness
-#include "localdata.h"
+#include "datasrc.h"
+#include <iostream>
+
 
 
 namespace Ui {
@@ -46,10 +49,6 @@ public:
     gstvideo(QWidget *parent = 0);
     ~gstvideo();
 
-
-
-
-
 private slots:
     void start();
     void stop();
@@ -59,50 +58,53 @@ private slots:
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);
+
+
 private:
     Ui::gstvideo *ui;
     WId window;
     inputBox *input = new inputBox;
+    Datasrc *source;
+    std::vector <Datasrc> dsrc;  //Vector of datasrc objects - they may be local data, tcp or from a file
+                                    //and will created dinamically
+    // ################## Video Element ##############################################################
     GstCaps *Vcaps;
-    GstCaps *Scaps;
-    GstCaps *Acaps;
-    GstCaps *enAcaps;
     GstCaps *enVcaps;
-    GstElement *Vlocalsrc;
-    GstElement *Vtcpsrc;
-    GstElement *Vfilesrc;
-    GstElement *Atcpsrc;
-    GstElement *Afilesrc;
+    GstElement *Vdefault;
     GstElement *conversor1;
-    GstElement *conversor2;
     GstElement *videobalance;
-    GstElement *sink;
-    GstElement *audiosink;
-    GstElement *Alocalsrc;
-    GstElement *conv;
-    GstElement *audiosampler;
+    GstCaps *Scaps;
     GstElement *videosinkconvert;
     GstElement *videorate;
-    GstElement *audiorate;
-    GstElement *audioparse;
-    GstElement *abin;
-    GstElement *vV4L2bin;
-    GstElement *volume;
-    GstElement *aacparse;
+    GstElement *sink; //ximagesink
     GstElement *x264enc;
-    GstElement *faac;
     GstElement *h264parse;
-    GstElement *tcpclientsrc;
     GstElement *avdec_h264;
+    GstElement *Vscale;
+    GstElement *Sscale;
+    GstElement *scale;
+    GstElement *Svideoconvert;
+    GstElement *Svideoconvert2;
+    GstElement *videoSelector;
+
+    //################## Audio elements #############################################################
+    GstCaps *Acaps;
+    GstCaps *enAcaps;
+    GstElement *Adefault;
+    GstElement *conv;
+    GstElement *volume;
+    GstElement *audiorate;
+    GstElement *audiosampler;
+    GstElement *audiosink;
+    GstElement *aacparse;
+    GstElement *faac;
+    GstElement *audioparse;
+    GstElement *audiomixer;
+//####################### Encoding and others elements #############################################
     GstElement *flvmux;
     GstElement *Ltee1;
     GstElement *Ltee2;
     GstElement *rtmp;
-    GstElement *scale;
-    GstElement *Vscale;
-    GstElement *Sscale;
-    GstElement *Svideoconvert;
-    GstElement *Svideoconvert2;
     GstElement *queue1;
     GstElement *queue2;
     GstElement *queue3;
@@ -116,22 +118,26 @@ private:
     GstElement *curr ;
     GstElement *conv_before;
     GstElement *conv_after;
+    GstElement *filesink;
+    GstElement *tcpsink;
     GstElement *vdecoder;
-
-
     GstBus *bus;
     GMainLoop *loop;
-    QString videopath, audiopath, youkey;
-    bool audioSame;
-    void update_color_channel (gchar*, gint, GstColorBalance*);
+    //##############################################################################################
 
+    QString videopath, audiopath, youkey;
+
+    //########################## Gstreamer functions ###############################################
+
+    void update_color_channel (gchar*, gint, GstColorBalance*);
     static GstBusSyncReply bus_sync_handler (GstBus *, GstMessage *, gstvideo *v);
     static guintptr cam_window_handle;
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static void callback(GstBus  *bus, GstMessage *msg, gstvideo *v);
-    static void videoPad_added_handler(GstElement *src, GstPad *new_pad, gstvideo *v);
-
+    static void pad_added(GstElement *src, GstPad *new_pad, gstvideo *v);
+    void configure();
+    void addSource();
 
 
 };

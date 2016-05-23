@@ -51,12 +51,12 @@ OBJECTS_DIR   = ./
 SOURCES       = src/gstvideo.cpp \
 		src/main.cpp \
 		src/inputbox.cpp \
-		src/localdata.cpp moc_gstvideo.cpp \
+		src/datasrc.cpp moc_gstvideo.cpp \
 		moc_inputbox.cpp
 OBJECTS       = gstvideo.o \
 		main.o \
 		inputbox.o \
-		localdata.o \
+		datasrc.o \
 		moc_gstvideo.o \
 		moc_inputbox.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
@@ -147,11 +147,10 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		src/ui_gstvideo.h \
 		src/inputbox.h \
 		src/ui_inputbox.h \
-		src/datasrc.h \
-		src/localdata.h src/gstvideo.cpp \
+		src/datasrc.h src/gstvideo.cpp \
 		src/main.cpp \
 		src/inputbox.cpp \
-		src/localdata.cpp
+		src/datasrc.cpp
 QMAKE_TARGET  = gstvideo
 DESTDIR       = #avoid trailing-slash linebreak
 TARGET        = gstvideo
@@ -373,8 +372,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents src/gstvideo.h src/ui_gstvideo.h src/inputbox.h src/ui_inputbox.h src/datasrc.h src/localdata.h $(DISTDIR)/
-	$(COPY_FILE) --parents src/gstvideo.cpp src/main.cpp src/inputbox.cpp src/localdata.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents src/gstvideo.h src/ui_gstvideo.h src/inputbox.h src/ui_inputbox.h src/datasrc.h $(DISTDIR)/
+	$(COPY_FILE) --parents src/gstvideo.cpp src/main.cpp src/inputbox.cpp src/datasrc.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents gstvideo.ui inputbox.ui $(DISTDIR)/
 
 
@@ -447,9 +446,8 @@ inputbox.o: src/inputbox.cpp src/inputbox.h \
 		src/ui_inputbox.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o inputbox.o src/inputbox.cpp
 
-localdata.o: src/localdata.cpp src/localdata.h \
-		src/datasrc.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o localdata.o src/localdata.cpp
+datasrc.o: src/datasrc.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o datasrc.o src/datasrc.cpp
 
 moc_gstvideo.o: moc_gstvideo.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_gstvideo.o moc_gstvideo.cpp
