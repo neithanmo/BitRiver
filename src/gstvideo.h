@@ -65,7 +65,7 @@ private:
     WId window;
     inputBox *input = new inputBox;
     Datasrc *source;
-    std::vector <Datasrc> dsrc;  //Vector of datasrc objects - they may be local data, tcp or from a file
+    std::vector <Datasrc *> dsrc;  //Vector of datasrc objects - they may be local data, tcp or from a file
                                     //and will created dinamically
     // ################## Video Element ##############################################################
     GstCaps *Vcaps;
