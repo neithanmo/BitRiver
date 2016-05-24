@@ -14,7 +14,7 @@ CC            = gcc
 CXX           = g++
 DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
 CFLAGS        = -m64 -pipe -O2 -pthread -pthread -pthread -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-CXXFLAGS      = -m64 -pipe -O2 -pthread -pthread -pthread -Wall -W -D_REENTRANT -fPIC $(DEFINES)
+CXXFLAGS      = -m64 -pipe -O2 -pthread -pthread -pthread -std=c++0x -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 INCPATH       = -I. -I. -Iscripts -isystem /usr/local/include/gstreamer-1.0 -I/usr/local/lib/gstreamer-1.0/include -isystem /usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64
 QMAKE         = /usr/lib/x86_64-linux-gnu/qt5/bin/qmake
 DEL_FILE      = rm -f
@@ -132,6 +132,7 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_post.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/link_pkgconfig.prf \
+		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/c++11.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/warn_on.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resources.prf \
@@ -254,6 +255,7 @@ Makefile: gstvideo.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qmake.
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_post.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/link_pkgconfig.prf \
+		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/c++11.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/warn_on.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resources.prf \
@@ -343,6 +345,7 @@ Makefile: gstvideo.pro /usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++-64/qmake.
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resolve_config.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/default_post.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/link_pkgconfig.prf:
+/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/c++11.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/warn_on.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/qt.prf:
 /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/resources.prf:
@@ -446,7 +449,7 @@ inputbox.o: src/inputbox.cpp src/inputbox.h \
 		src/ui_inputbox.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o inputbox.o src/inputbox.cpp
 
-datasrc.o: src/datasrc.cpp 
+datasrc.o: src/datasrc.cpp src/datasrc.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o datasrc.o src/datasrc.cpp
 
 moc_gstvideo.o: moc_gstvideo.cpp 
