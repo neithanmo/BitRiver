@@ -199,13 +199,10 @@ void gstvideo::configure(){
     bool loop = true;
     std::string location = "/home/neithan/panaflat.avi";
     std::string device = "/dev/video0";
-    //Datasrc src = new Datasrc(location,loop); //no es correcta esta conversion, se requiere c++ ++11
-    Datasrc src2(device);
-    dsrc.push_back(src2);
-    //dsrc.push_back(src);
-    source = new Datasrc(location, loop);//si trabaja
-    //source = dsrc.back(); not work
-    //GstElement *databin = dsrc.front().get_bin();
+
+    dsrc.push_back(new Datasrc(location, loop));
+    dsrc.push_back(new Datasrc(device));
+    source = dsrc.front();
     gst_bin_add_many(GST_BIN(pipeline), source->get_bin(),queue1, this->scale, this->conversor1,
                                                          this->videobalance, conv_before, curr, conv_after,this->sink, NULL);
     gst_element_link_many(queue1,this->scale,this->conversor1,this->videobalance,
@@ -214,9 +211,12 @@ void gstvideo::configure(){
     GstPad *pd = gst_element_get_static_pad(source->get_bin(),"videosrc");
     GstPad *pd2 = gst_element_get_static_pad(queue1,"sink");
     gst_pad_link(pd,pd2);
-    g_signal_connect(source->decoder, "pad-added", G_CALLBACK(source->pad_added), source);//callback to a pad_add member of Datasrc
+    g_signal_connect(source->decoder, "pad-added",
+                     G_CALLBACK(source->pad_added), dsrc.front());//callback to a pad_add member of Datasrc
     g_object_unref(pd);
     g_object_unref(pd2);
+    //delete x;
+    //delete source;
 }
 
 
