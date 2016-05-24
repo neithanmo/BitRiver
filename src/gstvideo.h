@@ -86,6 +86,8 @@ private:
     GstElement *Svideoconvert;
     GstElement *Svideoconvert2;
     GstElement *videoSelector;
+    GstElement * defaultcamera;
+
 
     //################## Audio elements #############################################################
     GstCaps *Acaps;
@@ -120,7 +122,6 @@ private:
     GstElement *conv_after;
     GstElement *filesink;
     GstElement *tcpsink;
-    GstElement *vdecoder;
     GstBus *bus;
     GMainLoop *loop;
     //##############################################################################################
