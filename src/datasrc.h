@@ -9,9 +9,9 @@ class Datasrc
 {
 public:
     friend class gstvideo;
-    Datasrc(std::string &device);
-    Datasrc(std::string &location, bool &loop);
-    Datasrc(std::string &host, std::string &port);
+    Datasrc(std::string &device, std::string &name);
+    Datasrc(std::string &location, bool &loop, std::string &name);
+    Datasrc(std::string &host, std::string &port, std::string &name);
     ~Datasrc();
 protected:
 
@@ -20,6 +20,7 @@ protected:
     GstElement *decoder;
     GstElement *vqueue;
     GstElement *aqueue;
+
     inline GstElement* get_bin(){return databin;}
 
     inline void datasrc_set_ghost_vpad(){
@@ -36,7 +37,8 @@ protected:
 
 
     static void pad_added(GstElement *src, GstPad *new_pad, Datasrc *v);
-    //static void bus_callback(GstBus *ebus, GstMessage *msg, Datasrc *data);
+    static void bus_callback(GstBus *ebus, GstMessage *msg, Datasrc *data);
+    static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
 
 };
 #endif // DATASRC_H

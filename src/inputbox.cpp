@@ -1,6 +1,6 @@
 #include "inputbox.h"
 #include "ui_inputbox.h"
-#include<QFileDialog>
+
 
 
 inputBox::inputBox(QWidget *parent) :

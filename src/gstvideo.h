@@ -26,12 +26,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLineEdit>
 #include <gst/audio/streamvolume.h>
 #include <string.h>
+#include <iostream>
 #include <vector>
 #include "ui_gstvideo.h"
 #include "inputbox.h"
 #include "gstvideo.h"//for moc compiling happiness
 #include "datasrc.h"
-#include <iostream>
+#include "newsource.h"
 
 
 
@@ -59,6 +60,7 @@ private slots:
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);
 
+    void on_pushButton_clicked();
 
 private:
     Ui::gstvideo *ui;
@@ -136,6 +138,8 @@ private:
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static void callback(GstBus  *bus, GstMessage *msg, gstvideo *v);
+    static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
+
     void configure();
     void addSource();
 
