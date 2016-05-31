@@ -124,6 +124,7 @@ private:
     GstElement *conv_after;
     GstElement *filesink;
     GstElement *tcpsink;
+    GstPadTemplate *in_sel_template, *mix_template;
     GstBus *bus;
     GMainLoop *loop;
     //##############################################################################################

@@ -64,7 +64,7 @@ public:
     {
         if (gstvideo->objectName().isEmpty())
             gstvideo->setObjectName(QStringLiteral("gstvideo"));
-        gstvideo->resize(660, 731);
+        gstvideo->resize(660, 694);
         gstvideo->setMinimumSize(QSize(660, 0));
         gstvideo->setMaximumSize(QSize(660, 16777215));
         widget = new QWidget(gstvideo);
@@ -218,15 +218,18 @@ public:
 
         gridLayout->addWidget(label_4, 0, 2, 1, 1);
 
-        pushButton = new QPushButton(gstvideo);
+        pushButton = new QPushButton(layoutWidget);
         pushButton->setObjectName(QStringLiteral("pushButton"));
-        pushButton->setGeometry(QRect(290, 690, 88, 34));
+
+        gridLayout->addWidget(pushButton, 6, 1, 1, 1);
+
         spinBox->raise();
         layoutWidget->raise();
         widget->raise();
-        pushButton->raise();
 
         retranslateUi(gstvideo);
+        QObject::connect(bplay, SIGNAL(clicked()), bstop, SLOT(toggle()));
+        QObject::connect(bstop, SIGNAL(clicked()), bplay, SLOT(toggle()));
 
         QMetaObject::connectSlotsByName(gstvideo);
     } // setupUi
@@ -495,6 +498,8 @@ public:
         widget->raise();
 
         retranslateUi(gstvideo);
+        QObject::connect(bplay, SIGNAL(clicked()), bstop, SLOT(toggle()));
+        QObject::connect(bstop, SIGNAL(clicked()), bplay, SLOT(toggle()));
 
         QMetaObject::connectSlotsByName(gstvideo);
     } // setupUi
