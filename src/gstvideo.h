@@ -62,13 +62,18 @@ private slots:
 
     void on_pushButton_clicked();
 
+    void on_videoList_currentRowChanged(int currentRow);
+
 private:
     Ui::gstvideo *ui;
     WId window;
+    QScrollArea *area;
+    QWidget *widget;
     inputBox *input = new inputBox;
     Datasrc *source;
     std::vector <Datasrc *> dsrc;  //Vector of datasrc objects - they may be local data, tcp or from a file
                                     //and will created dinamically
+    //std::vector <Datasrc> dsrc;
     // ################## Video Element ##############################################################
     GstCaps *Vcaps;
     GstCaps *enVcaps;
@@ -148,3 +153,5 @@ private:
 };
 
 #endif // GSTVIDEO_H
+
+

@@ -31,12 +31,19 @@ private slots:
 
     void on_Newmediasource_accepted();
 
+    void on_videoDev_currentIndexChanged(int index);
+
+    void on_audioDev_currentIndexChanged(int index);
+
+    void on_lineEdit_2_editingFinished();
+
 private:
     Ui::newSource *ui;
     int sourcetype;
     int sourcePort;
     QString sourceIP;
     QString sourcefilePath;
+    QString device;
     QString sourceName;
 };
 

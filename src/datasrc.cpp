@@ -1,49 +1,49 @@
 #include "datasrc.h"
 
 
-Datasrc::Datasrc(std::string &device, std::string &name){
-    std::cout<<"entering to v4l2src constructor"<<std::endl;
-    databin = gst_bin_new(name.c_str());
-    src = gst_element_factory_make("v4l2src","camara");                                    //V4L2SRC
+Datasrc::Datasrc(QString &device, QString &name){
+    std::cout<<"entering to localdata constructor"<<std::endl;
+    QString srcname = "localdata-"+name;
+    databin = gst_bin_new(name.toUtf8().constData());
+    src = gst_element_factory_make(device.toUtf8().constData(),srcname.toUtf8().constData());  //V4L2SRC
     decoder = gst_element_factory_make("decodebin","decoder");
     vqueue = gst_element_factory_make("queue","vqueue");
     aqueue = gst_element_factory_make("queue","aqueue");
     gst_bin_add_many(GST_BIN(databin),src,decoder, vqueue,NULL);
     gst_element_link_many(src,decoder,NULL);
-    g_object_set(src, "do-timestamp", TRUE, "device", device.c_str(), NULL);
-    datasrc_set_ghost_vpad();
-    std::cout<<"dispositivo = :"<< device << std::endl;
+    if(device.toUtf8().constData() == "v4l2src")
+        datasrc_set_ghost_vpad();
+    else
+        datasrc_set_ghost_apad();
 }
 
-Datasrc::Datasrc(std::string &location, bool &loop, std::string &name){
+Datasrc::Datasrc(QString &location, QString &name, bool &loop){
 
     std::cout<<"entering to filesrc constructor"<<std::endl;
-    databin = gst_bin_new(name.c_str());
-    src = gst_element_factory_make("filesrc","file");
+    QString srcname = "file-"+name;
+    databin = gst_bin_new(name.toUtf8().constData());
+    src = gst_element_factory_make("filesrc",srcname.toUtf8().constData());
     decoder = gst_element_factory_make("decodebin","decoder");
     vqueue = gst_element_factory_make("queue","vqueue");
     aqueue = gst_element_factory_make("queue","aqueue");
-//    ebus = gst_element_get_bus(src);
-//    gst_bus_enable_sync_message_emission(ebus);
-//    gst_bus_add_signal_watch(ebus);
     gst_bin_add_many(GST_BIN(databin),src,decoder, vqueue, aqueue, NULL);                      //FILESRC
     gst_element_link_many(src,decoder,NULL);
-    g_object_set(src, "do-timestamp", TRUE, "location", location.c_str(), NULL);
+    g_object_set(src, "do-timestamp", TRUE, "location", location.toUtf8().constData(), NULL);
     datasrc_set_ghost_vpad();
     datasrc_set_ghost_apad();
-    std::cout<<"location = :"<< location << std::endl;
+    g_print("exiting from filesrc constructor, all is done");
 }
 
-Datasrc::Datasrc(std::string &host, std::string &port, std::string &name){
-    std::cout<<"entering to v4l2src constructor"<<std::endl;
-    databin = gst_bin_new(name.c_str());
-    src = gst_element_factory_make("tcpclientsrc","file");
+Datasrc::Datasrc(QString &host, int &port, QString &name){
+    QString srcname = "tcp-"+name;
+    databin = gst_bin_new(name.toUtf8().constData());
+    src = gst_element_factory_make("tcpclientsrc",srcname.toUtf8().constData());
     decoder = gst_element_factory_make("decodebin","decoder");
     vqueue = gst_element_factory_make("queue","vqueue");
     aqueue = gst_element_factory_make("queue","aqueue");
     gst_bin_add_many(GST_BIN(databin),src, decoder, vqueue, aqueue, NULL);                 //TCPSRC
     gst_element_link_many(src,decoder,NULL);
-    g_object_set(src, "host", host.c_str(), "port", port.c_str(),NULL);
+    g_object_set(src, "host", host.toUtf8().constData(), "port", port, NULL);
     datasrc_set_ghost_vpad();
     datasrc_set_ghost_apad();
 }
@@ -53,8 +53,8 @@ Datasrc::~Datasrc(){
 }
 
 void Datasrc::pad_added(GstElement *src, GstPad *new_pad, Datasrc *v) {
-    //Q_UNUSED(src);
-    g_print("entering into padd-added video function: \n");
+    Q_UNUSED(src);
+    g_print("entering into padd-added function: \n");
     GstPad *sinkpad = NULL;
     GstPadLinkReturn ret;
     GstCaps *new_pad_caps = NULL;
@@ -66,7 +66,6 @@ void Datasrc::pad_added(GstElement *src, GstPad *new_pad, Datasrc *v) {
     if (g_strrstr (gst_structure_get_name (new_pad_struct), "video")){ //checking if there is video caps
          g_print("new video pad added \n");
          sinkpad = gst_element_get_static_pad(v->vqueue, "sink");
-         g_print("linked new pad with a peer done \n");
     }
     else
          sinkpad = gst_element_get_static_pad (v->aqueue, "sink"); //it is a audio caps structure

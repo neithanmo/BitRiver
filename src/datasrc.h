@@ -9,9 +9,9 @@ class Datasrc
 {
 public:
     friend class gstvideo;
-    Datasrc(std::string &device, std::string &name);
-    Datasrc(std::string &location, bool &loop, std::string &name);
-    Datasrc(std::string &host, std::string &port, std::string &name);
+    Datasrc(QString &device, QString &name); //local data constructor
+    Datasrc(QString &location, QString &name, bool &loop);//filesrc constructor
+    Datasrc(QString &host, int &port, QString &name); //tcpsrc constructor
     ~Datasrc();
 protected:
 
