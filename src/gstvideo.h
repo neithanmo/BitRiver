@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <math.h>
 #include <QLineEdit>
 #include <gst/audio/streamvolume.h>
+#include <gst/audio/audio.h>
 #include <string.h>
 #include <iostream>
 #include <vector>
@@ -64,11 +65,12 @@ private slots:
 
     void on_videoList_currentRowChanged(int currentRow);
 
+
+    void on_audioList_currentRowChanged(int currentRow);
+
 private:
     Ui::gstvideo *ui;
     WId window;
-    QScrollArea *area;
-    QWidget *widget;
     inputBox *input = new inputBox;
     Datasrc *source;
     std::vector <Datasrc *> dsrc;  //Vector of datasrc objects - they may be local data, tcp or from a file
@@ -94,6 +96,8 @@ private:
     GstElement *Svideoconvert2;
     GstElement *videoSelector;
     GstElement * defaultcamera;
+    GstElement *audiotestsrc;
+    GstElement *videotestsrc;
 
 
     //################## Audio elements #############################################################
@@ -123,6 +127,8 @@ private:
     GstElement *queue7;
     GstElement *queue8;
     GstElement *queue9;
+    GstElement *vselqueue;
+    GstElement *aselqueue;
     GstElement *pipeline;
     GstElement *curr ;
     GstElement *conv_before;
@@ -131,6 +137,7 @@ private:
     GstElement *tcpsink;
     GstPadTemplate *in_sel_template, *mix_template;
     GstBus *bus;
+    int audioItem;
     GMainLoop *loop;
     //##############################################################################################
 
@@ -153,5 +160,11 @@ private:
 };
 
 #endif // GSTVIDEO_H
+
+
+
+
+
+
 
 

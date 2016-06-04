@@ -9,7 +9,7 @@ class Datasrc
 {
 public:
     friend class gstvideo;
-    Datasrc(QString &device, QString &name); //local data constructor
+    Datasrc(int type, QString &name); //local data constructor
     Datasrc(QString &location, QString &name, bool &loop);//filesrc constructor
     Datasrc(QString &host, int &port, QString &name); //tcpsrc constructor
     ~Datasrc();
@@ -20,6 +20,10 @@ protected:
     GstElement *decoder;
     GstElement *vqueue;
     GstElement *aqueue;
+    GstElement *aconvert;
+    GstElement *vconvert;
+    GstCaps *acaps;
+    GstCaps *vcaps;
 
     inline GstElement* get_bin(){return databin;}
 

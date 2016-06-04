@@ -121,7 +121,7 @@ void newSource::on_Newmediasource_accepted()
 void newSource::on_videoDev_currentIndexChanged(int index){
 
        device = ui->videoDev->currentText();
-       qDebug()<<"video device delected is: "<<device;
+       qDebug()<<"video device delected is:\n "<<device;
 
 }
 
@@ -129,7 +129,7 @@ void newSource::on_videoDev_currentIndexChanged(int index){
 void newSource::on_audioDev_currentIndexChanged(int index)
 {
     device = ui->audioDev->currentText();
-    qDebug()<<"audio device delected is: "<<device;
+    qDebug()<<"audio device selected is: "<<device;
 }
 
 void newSource::on_lineEdit_2_editingFinished()

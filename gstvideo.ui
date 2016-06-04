@@ -107,58 +107,7 @@
     <string>audio sources</string>
    </property>
   </widget>
-  <widget class="QScrollArea" name="area">
-   <property name="geometry">
-    <rect>
-     <x>-10</x>
-     <y>-10</y>
-     <width>681</width>
-     <height>431</height>
-    </rect>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>681</width>
-     <height>431</height>
-    </size>
-   </property>
-   <property name="widgetResizable">
-    <bool>true</bool>
-   </property>
-   <widget class="QWidget" name="scrollAreaWidgetContents_2">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>677</width>
-      <height>427</height>
-     </rect>
-    </property>
-    <widget class="QWidget" name="widget" native="true">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>0</y>
-       <width>1920</width>
-       <height>431</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>681</width>
-       <height>431</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>1920</width>
-       <height>1080</height>
-      </size>
-     </property>
-    </widget>
-   </widget>
-  </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -199,7 +148,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>470</x>
@@ -276,7 +225,7 @@
     <string>new Source</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>20</x>
@@ -398,12 +347,12 @@
     <string>Play</string>
    </property>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>470</x>
      <y>460</y>
-     <width>225</width>
+     <width>181</width>
      <height>28</height>
     </rect>
    </property>
@@ -424,18 +373,63 @@
     </item>
    </layout>
   </widget>
+  <widget class="QScrollArea" name="scrollArea">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>661</width>
+     <height>431</height>
+    </rect>
+   </property>
+   <property name="widgetResizable">
+    <bool>true</bool>
+   </property>
+   <widget class="QWidget" name="scrollAreaWidgetContents">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>657</width>
+      <height>427</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">alternate-background-color: qradialgradient(spread:repeat, cx:0.5, cy:0.5, radius:0.077, fx:0.5, fy:0.5, stop:0 rgba(0, 169, 255, 147), stop:0.497326 rgba(0, 0, 0, 147), stop:1 rgba(0, 169, 255, 147));</string>
+    </property>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>-11</x>
+       <y>-11</y>
+       <width>671</width>
+       <height>441</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <zorder>layoutWidget</zorder>
+  <zorder>label_3</zorder>
+  <zorder>label_4</zorder>
+  <zorder>pushButton</zorder>
+  <zorder>layoutWidget</zorder>
+  <zorder>label_2</zorder>
+  <zorder>label_5</zorder>
+  <zorder>label</zorder>
+  <zorder>bstop</zorder>
+  <zorder>comboBox</zorder>
+  <zorder>bplay</zorder>
+  <zorder>layoutWidget</zorder>
   <zorder>spinBox</zorder>
   <zorder>layoutWidget</zorder>
-  <zorder>progressBar3</zorder>
-  <zorder>slider3</zorder>
-  <zorder>slider5</zorder>
   <zorder>slider5</zorder>
   <zorder>label_6</zorder>
   <zorder>videoList</zorder>
   <zorder>audioList</zorder>
   <zorder>label_7</zorder>
   <zorder>label_8</zorder>
-  <zorder>area</zorder>
+  <zorder>scrollArea</zorder>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
