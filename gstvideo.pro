@@ -9,20 +9,21 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TEMPLATE = app
 TARGET = gstvideo
 INCLUDEPATH += . scripts
-
 # Input
 HEADERS += src/gstvideo.h \
             src/ui_gstvideo.h \
     src/inputbox.h \
     src/ui_inputbox.h \
     src/datasrc.h \
-    src/localdata.h
+    src/newsource.h
 
 FORMS += gstvideo.ui \
-         inputbox.ui
+         inputbox.ui \
+    src/newsource.ui
 SOURCES += src/gstvideo.cpp src/main.cpp \
     src/inputbox.cpp \
-    src/localdata.cpp
+    src/datasrc.cpp \
+    src/newsource.cpp
 
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += gstreamer-1.0
