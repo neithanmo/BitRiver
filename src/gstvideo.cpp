@@ -139,8 +139,6 @@ gstvideo::gstvideo(QWidget *parent) :
     g_object_set(audioparse, "rate", input->arate, "channels", input->channels, NULL);
     g_object_set(flvmux, "streamable", TRUE, NULL);
 
-    g_object_set(videoSelector, "sync-streams ", false, "cache-buffers", false,NULL);
-
     Vcaps = gst_caps_from_string("video/x-raw, format=BGRA, interlace-mode=progressive, framerate=30/1");
     Scaps = gst_caps_new_simple("video/x-raw",
                                       //"framerate", GST_TYPE_FRACTION, 25, 1,
@@ -148,7 +146,7 @@ gstvideo::gstvideo(QWidget *parent) :
                                       "width", G_TYPE_INT, input->resolutionX,
                                       "height", G_TYPE_INT, input->resolutionY,
                                        NULL);
-    Acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, rate=44100");
+    Acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, rate=44100, channels=2");
     enVcaps = gst_caps_new_simple("video/x-h264",
                    "level", G_TYPE_STRING, "4.1",
                    "profile", G_TYPE_STRING, "main",
@@ -161,7 +159,8 @@ gstvideo::gstvideo(QWidget *parent) :
 
     //####################################################################################################################################
 
-      g_object_set(audiomixer, "start-time-selection" , 0, "caps", Acaps, NULL);
+    g_object_set(videoSelector, "sync-streams", true, "sync-mode", 0,NULL);
+    g_object_set(audiomixer, "start-time-selection" , 1, "caps", Acaps, NULL);
     //g_object_set(audiomixer, "caps",Acaps, NULL);
     //binpad = gst_element_get_static_pad(this->volume, "src");
     //GstPad *pad = gst_element_get_static_pad(this->videobalance, "src");
@@ -216,16 +215,13 @@ void gstvideo::configure(){
     ui->videoList->addItem(videoDevice);
 
 
-
-    g_object_set(defaultcamera, "do-timestamp", TRUE, "device", videoDevice.toUtf8().constData(),"name",
+     //videoDevice.toUtf8().constData()
+    g_object_set(defaultcamera, "do-timestamp", TRUE, "device", "/dev/video0","name",
                  videoDevice.toUtf8().constData(), NULL);
-    g_object_set(Adefault, "do-timestamp", TRUE, "provide-clock", false, "device", audioDevice.toUtf8().constData(),
+    g_object_set(Adefault, "do-timestamp", TRUE, "provide-clock", false, "device", "plughw:Generic",
                  "name", audioDevice.toUtf8().constData(), NULL);
     //g_object_set(audiotestsrc, "is-live", TRUE, "wave", 2, "do-timestamp", TRUE, NULL);
     blockpad = gst_element_get_static_pad(conversor1,"src");
-
-    //gst_pad_add_probe(gst_element_get_static_pad(source->get_bin(),"videosrc"), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
-                      //(GstPadProbeCallback)source->bus_eos, dsrc.front(), NULL);
 
     gst_bin_add_many(GST_BIN(pipeline),this->defaultcamera, this->videoSelector, vselqueue,this->videorate, this->conversor1,this->scale,
                      this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7,this->x264enc,
@@ -434,18 +430,25 @@ void gstvideo::addSource(){
                  g_critical ("link audio source to audiomixer failed.\n");
                  exit(1);
          }
-        g_object_unref(mixer_pad);
-        g_object_unref(a_pad);
-        g_object_unref(in_sel);
-        g_object_unref(lo_pad);
+        long int position_nano;
+        gst_element_query_position(pipeline, GST_FORMAT_TIME, &position_nano);
+        g_print ("Duration: %" GST_TIME_FORMAT "\n", GST_TIME_ARGS (position_nano));
+        gst_pad_set_offset(lo_pad, position_nano);
+        gst_pad_set_offset(a_pad, position_nano);
         gst_element_sync_state_with_parent(source->get_bin());
         //gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
+        gst_pad_add_probe(gst_element_get_static_pad(source->src,"src"), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
+                          (GstPadProbeCallback)source->bus_eos, dsrc.back(), NULL);
         g_print("the new element added into the pipeline is: %s\n", GST_ELEMENT_NAME(source->get_bin()));
         GList *pads = GST_ELEMENT_PADS(audiomixer);
         guint number = g_list_length(pads);
         g_print("current number of audiomixer pads is: %u \n", number);
         ui->videoList->addItem(add->sourceName);
         ui->audioList->addItem(add->sourceName);
+        g_object_unref(mixer_pad);
+        g_object_unref(a_pad);
+        g_object_unref(in_sel);
+        g_object_unref(lo_pad);
 
     }
         break;
