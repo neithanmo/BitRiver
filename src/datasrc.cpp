@@ -14,10 +14,7 @@ Datasrc::Datasrc(int type, QString &name){
     }
     if(type == 1){
         src = gst_element_factory_make("alsasrc",NULL);
-        acaps = gst_caps_new_simple("audio/x-raw",
-                                          "format", G_TYPE_STRING, "S16LE",
-                                          "layout", G_TYPE_STRING, "interleaved",
-                       NULL);
+        acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved");
         aqueue = gst_element_factory_make("queue","aqueue");
         gst_bin_add_many(GST_BIN(databin),src,aqueue,NULL);
         gst_element_link_filtered(src, aqueue, acaps);
@@ -34,11 +31,11 @@ Datasrc::Datasrc(QString &location, QString &name, bool &loop){
     src = gst_element_factory_make("filesrc","file");
     decoder = gst_element_factory_make("decodebin","decoder");
     vqueue = gst_element_factory_make("queue","vqueue");
-    vcaps = gst_caps_from_string("video/x-raw, format=BGRA, interlace-mode=progressive, framerate=30/1");
+    vcaps = gst_caps_from_string("video/x-raw, format=BGRA, interlace-mode=progressive");
     vconvert = gst_element_factory_make("videoconvert","vconvert");
     aqueue = gst_element_factory_make("queue","aqueue");
     aconvert = gst_element_factory_make("audioconvert","aconvert");
-    acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, rate=44100");
+    acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved");
     gst_bin_add_many(GST_BIN(databin),src,decoder,vconvert,
                      vqueue, aconvert,aqueue, NULL);                         //FILESRC
     gst_element_link_many(src,decoder,NULL);
@@ -55,11 +52,11 @@ Datasrc::Datasrc(QString &host, int &port, QString &name){
     src = gst_element_factory_make("tcpclientsrc","tcp-server");
     decoder = gst_element_factory_make("decodebin","decoder");
     vqueue = gst_element_factory_make("queue","vqueue");
-    vcaps = gst_caps_from_string("video/x-raw, format=BGRA, interlace-mode=progressive, framerate=30/1");
+    vcaps = gst_caps_from_string("video/x-raw, format=BGRA, interlace-mode=progressive");
     vconvert = gst_element_factory_make("videoconvert","vconvert");
     aqueue = gst_element_factory_make("queue","aqueue");
     aconvert = gst_element_factory_make("audioconvert","aconvert");
-    acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, rate=44100");
+    acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved");
     gst_bin_add_many(GST_BIN(databin),src,decoder,vconvert,
                      vqueue, aconvert,aqueue, NULL);                         //TCPSRC
     gst_element_link_many(src,decoder,NULL);
