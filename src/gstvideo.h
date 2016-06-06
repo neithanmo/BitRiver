@@ -84,7 +84,7 @@ private:
     GstElement *videobalance;
     GstCaps *Scaps;
     GstElement *videosinkconvert;
-    GstElement *videorate;
+    GstElement *videoscale;
     GstElement *sink; //ximagesink
     GstElement *x264enc;
     GstElement *h264parse;
