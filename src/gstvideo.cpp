@@ -158,8 +158,8 @@ gstvideo::gstvideo(QWidget *parent) :
 
     //####################################################################################################################################
 
-    //g_object_set(videoSelector, "sync-streams", true, "sync-mode", 0,NULL);
-    //g_object_set(audiomixer, "start-time-selection" , 1, "caps", Acaps, NULL);
+    g_object_set(videoSelector, "sync-streams", true, "sync-mode", 0,NULL);
+    g_object_set(audiomixer, "start-time-selection" , 1, "caps", Acaps, NULL);
     //g_object_set(audiomixer, "caps",Acaps, NULL);
     //binpad = gst_element_get_static_pad(this->volume, "src");
     //GstPad *pad = gst_element_get_static_pad(this->videobalance, "src");
@@ -222,13 +222,22 @@ void gstvideo::configure(){
     //g_object_set(audiotestsrc, "is-live", TRUE, "wave", 2, "do-timestamp", TRUE, NULL);
     blockpad = gst_element_get_static_pad(conversor1,"src");
 
-    gst_bin_add_many(GST_BIN(pipeline),this->defaultcamera, this->videoSelector, vselqueue,this->scale, this->conversor1,
+    gst_bin_add_many(GST_BIN(pipeline), this->defaultcamera, this->videoSelector, this->vselqueue, this->scale, this->conversor1,
+                     this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7, this->Sscale,
+                     this->Svideoconvert,this->x264enc,
+                     this->h264parse, queue3, this->flvmux, queue4,
+                     this->rtmp, Adefault, audiomixer, aselqueue,this->conv, this->audiosampler, this->volume, this->Ltee2,
+                     queue9, this->faac, this->aacparse, queue5,
+                     queue8, this->audiosink,
+                     queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
+
+    /*gst_bin_add_many(GST_BIN(pipeline),this->defaultcamera, this->videoSelector, vselqueue,this->scale, this->conversor1,
                      this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7, this->x264enc,
                      queue3, this->flvmux, queue4,
                      this->rtmp, this->Adefault, this->audiomixer, aselqueue, this->conv, this->audiosampler, this->volume, this->Ltee2,
                      queue9, this->faac, this->aacparse, queue5,
                      queue8, this->audiosink,
-                     queue6, this->videosinkconvert, this->sink, NULL);
+                     queue6, this->videosinkconvert, this->sink, NULL);*/
 
     GstPad *mixer_pad = gst_element_request_pad (audiomixer, mix_template, NULL, NULL);
     GstPad *a_pad = gst_element_get_static_pad(this->Adefault, "src");
@@ -239,8 +248,8 @@ void gstvideo::configure(){
     ui->audioList->addItem(audioDevice);
 
 
-    gst_element_link_many(this->audiomixer, this->aselqueue,this->conv, this->audiosampler, this->volume, this->Ltee2, NULL);
-    gst_element_link(this->audioparse, this->volume);
+
+    //gst_element_link(this->audioparse, this->volume);
 
     GstPad *in_sel = gst_element_request_pad (videoSelector, in_sel_template, NULL, NULL);//link default camera to videoSelector
     GstPad *lo_pad = gst_element_get_static_pad(this->defaultcamera, "src");
@@ -249,15 +258,24 @@ void gstvideo::configure(){
              exit(1);
      }
 
-    gst_element_link_many(this->videoSelector,this->vselqueue,this->scale, this->conversor1, NULL);
+    gst_element_link_many(this->videoSelector, this->vselqueue, this->scale, this->conversor1, this->videobalance,
+                                                      conv_before, curr, conv_after,this->Ltee1, NULL);
 
-    gst_element_link_filtered(this->conversor1, this->videobalance,this->Scaps);
-    gst_element_link_many(this->videobalance, conv_before, curr, conv_after, this->Ltee1,NULL);//tee1 for video visualization
+    //gst_element_link_filtered(this->conversor1, this->videobalance,this->Scaps);
+    //gst_element_link_many(this->videobalance, conv_before, curr, conv_after, this->Ltee1,NULL);//tee1 for video visualization
                                                                       //and streaming branch
-    gst_element_link_many(queue6, this->videosinkconvert, this->sink, NULL);//for local visualization
-    gst_element_link_many(queue7, this->x264enc, queue3, NULL); //queue3 will be linked with flvmux by requesting
-    gst_element_link_filtered(this->conversor1, this->videobalance,this->Scaps);
+    //::::::::::::::::::::::::::Linking video elements :::::::::::::::::::::::::::::::::::::::::::::::::::::
+    gst_element_link_many(vselqueue, this->scale, this->conversor1, this->videobalance,
+                                                      conv_before, curr, conv_after,this->Ltee1, NULL);
+    gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, this->sink,NULL);
+    gst_element_link_many(queue7, this->Sscale, this->Svideoconvert, NULL);
+    gst_element_link_filtered (this->Svideoconvert, this->x264enc ,this->Scaps);
+    gst_element_link_many(this->x264enc, this->h264parse, queue3, NULL);
+    //(queue7, this->x264enc, queue3, NULL); //queue3 will be linked with flvmux by requesting
+    //gst_element_link_filtered(this->conversor1, this->videobalance,this->Scaps);
     gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
+    //:::::::::::::::::::::::::Linking audio elements:::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    gst_element_link_many(this->audiomixer, this->aselqueue,this->conv, this->audiosampler, this->volume, this->Ltee2, NULL);
     gst_element_link_many(queue8, this->audiosink, NULL); // audio local branch
     gst_element_link_many(queue9, this->faac, this->aacparse, NULL);//audio streaming branch
     gst_element_link_filtered(this->aacparse, queue5, this->enAcaps);//queue5 will be link with flvmux
