@@ -3,6 +3,7 @@
 guintptr gstvideo::cam_window_handle;
 static int effect = 0;
 static GstPad *blockpad;
+static GstElement *pipeline;
 
 gstvideo::gstvideo(QWidget *parent) :
     QWidget(parent),
@@ -24,7 +25,7 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->slider3->setValue(0);
     ui->slider4->setValue(0);
     ui->slider5->setRange(0,10);
-    ui->slider5->setValue(0);
+    //ui->slider5->setValue(0);
     ui->slider5->setTickPosition(QSlider::TicksAbove);
     ui->progressBar1->setValue(0);
     ui->progressBar1->setRange(-100,100);
@@ -47,8 +48,9 @@ gstvideo::gstvideo(QWidget *parent) :
                      ui->progressBar3, SLOT(setValue(int)));
     QObject::connect(ui->slider4, SIGNAL(valueChanged(int)),
                      ui->progressBar4, SLOT(setValue(int)));
-    gst_init(NULL, FALSE);
+
     input->exec();
+    gst_init(NULL, FALSE);
     ui->widget->setFixedWidth(input->resolutionX);
     ui->widget->setFixedHeight(input->resolutionY);
     ui->bplay->hide();
@@ -70,7 +72,7 @@ gstvideo::gstvideo(QWidget *parent) :
     conv_after = gst_element_factory_make("videoconvert", "conv_after");
     conv_before = gst_element_factory_make("videoconvert", "conv_before");
     videosinkconvert = gst_element_factory_make("videoconvert", "vsinkconvert");
-    Svideoconvert = gst_element_factory_make("videoconvert", "sconvert");
+    Svideoconvert = gst_element_factory_make("videoscale", "sconvert");
     videoscale = gst_element_factory_make("videoscale", "videoscale");
     Vscale = gst_element_factory_make("videoscale", "Vscale");
     this->Sscale = gst_element_factory_make("videoscale","Sscale");
@@ -85,7 +87,7 @@ gstvideo::gstvideo(QWidget *parent) :
     conv = gst_element_factory_make("audioconvert","aconv");
     volume = gst_element_factory_make("volume","volume");
     audiosink = gst_element_factory_make("autoaudiosink", "ausink");
-    faac = gst_element_factory_make("voaacenc","aacAudioencoder");
+    faac = gst_element_factory_make("faac","aacAudioencoder");
     aacparse = gst_element_factory_make("aacparse", "aacparse");
     audiosampler = gst_element_factory_make("audioresample", "audiosampler");
     audiorate = gst_element_factory_make("audiorate", "audiorate");
@@ -119,6 +121,7 @@ gstvideo::gstvideo(QWidget *parent) :
 
     in_sel_template = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (videoSelector), "sink_%u"); //Pads template of
     mix_template = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (audiomixer), "sink_%u");//videoselectro and audiomixer
+    gst_debug_set_active (true);
 
     if (!pipeline ){
         qDebug("pipeline not created");
@@ -129,23 +132,24 @@ gstvideo::gstvideo(QWidget *parent) :
     int keyint = 2*input->framerate;
     QString location = "rtmp://a.rtmp.youtube.com/live2/x/" + input->youtube + "?videoKeyframeFrequency=1&totalDatarate=8128 app=live2 flashVer=FME/3.0%20(compatible;%20FMSc%201.0) swfUrl=rtmp://a.rtmp.youtube.com/live2";
 
-    g_object_set(rtmp, "location", location.toUtf8().constData(), "sync", FALSE, NULL);
-    g_object_set(volume, "volume", 0, NULL);
+    g_object_set(rtmp, "location", location.toUtf8().constData(), "sync", TRUE, NULL);
+    g_object_set(volume, "volume", 1.0, NULL);
     g_object_set(faac, "bitrate", input->abrate, NULL);
-    g_object_set(x264enc, "bitrate", input->vbrate, "key-int-max", keyint, "bframes", 0, "byte-stream", false, "aud", true,
-                 "threads", 2, "speed-preset", 1, "pass", 17, NULL);
+    g_object_set(this->x264enc, "bitrate", input->vbrate, "key-int-max", keyint, "bframes", 0,
+                 "byte-stream",false,"speed-preset", 1, "aud", true,"psy-tune",1,NULL);
     g_object_set(sink, "sync", TRUE, NULL);
     g_object_set(audiosink, "sync", TRUE, NULL);
     g_object_set(audioparse, "rate", input->arate, "channels", input->channels, NULL);
     g_object_set(flvmux, "streamable", TRUE, NULL);
 
-    Vcaps = gst_caps_from_string("video/x-raw, format=BGRA, interlace-mode=progressive");
+    Vcaps = gst_caps_from_string("video/x-raw, format=I420");
     Scaps = gst_caps_new_simple("video/x-raw",
                                       "interlace-mode", G_TYPE_STRING, "progressive",
+                                      "format", G_TYPE_STRING, "I420",
                                       "width", G_TYPE_INT, input->resolutionX,
                                       "height", G_TYPE_INT, input->resolutionY,
                                        NULL);
-    Acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, channels=2");
+    Acaps = gst_caps_from_string("audio/x-raw, format=S16LE, layout=interleaved, rate=44100, channels=2");
     enVcaps = gst_caps_new_simple("video/x-h264",
                    "level", G_TYPE_STRING, "4.1",
                    "profile", G_TYPE_STRING, "main",
@@ -157,10 +161,11 @@ gstvideo::gstvideo(QWidget *parent) :
                     NULL);
 
     //####################################################################################################################################
-
-    g_object_set(videoSelector, "sync-streams", true, "sync-mode", 0,NULL);
-    g_object_set(audiomixer, "start-time-selection" , 1, "caps", Acaps, NULL);
-    //g_object_set(audiomixer, "caps",Acaps, NULL);
+   //g_object_set(videoSelector, "sync-streams", true, "sync-mode", 0,NULL);
+   //sy sync-mode != 0, el pad-probe en datasrc, se activa solo una vez.. curioso
+    //g_object_set(videoSelector, "sync-streams", false, NULL);
+     //g_object_set(audiomixer, "start-time-selection" ,1,"caps", Acaps, NULL);
+     //g_object_set(videoSelector, "start-time-selection" , 1, NULL);
     //binpad = gst_element_get_static_pad(this->volume, "src");
     //GstPad *pad = gst_element_get_static_pad(this->videobalance, "src");
 
@@ -172,7 +177,7 @@ gstvideo::gstvideo(QWidget *parent) :
     gst_bus_set_sync_handler (this->bus, (GstBusSyncHandler) bus_sync_handler, this, NULL);
     gst_object_unref (this->bus);
 
-    GstBus *mbus = gst_pipeline_get_bus(GST_PIPELINE(this->pipeline));
+    GstBus *mbus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
     gst_bus_add_signal_watch(mbus);
 
 
@@ -183,12 +188,13 @@ gstvideo::gstvideo(QWidget *parent) :
     connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(avolume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
-    //connect(ui->pushButton, SIGNAL(clicked()), this, SLOT(addSource()));
 
     configure();
-    gst_element_set_state(this->pipeline, GST_STATE_PLAYING);
+
+    gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
     g_signal_connect(mbus, "message::error", G_CALLBACK(callback), this);
+
 
     delete input;
 }
@@ -196,9 +202,8 @@ gstvideo::gstvideo(QWidget *parent) :
 
 gstvideo::~gstvideo(){
     gst_element_set_state(GST_ELEMENT(pipeline), GST_STATE_NULL);
-    g_main_loop_quit(loop);
+    g_main_loop_unref(loop);
     gst_object_unref(pipeline);
-    g_main_loop_quit(loop);
     delete ui;
     delete source;
 
@@ -206,38 +211,28 @@ gstvideo::~gstvideo(){
 
 void gstvideo::configure(){
 
+
     g_print("configuring the pipeline \n");
     QString videoDevice="/dev/"+input->localCamera;
     QString audioDevice = "plughw:"+input->localAudioCard;
     qDebug()<<"the sound card is " << audioDevice;
     qDebug()<<"video device is " << videoDevice;
-    ui->videoList->addItem(videoDevice);
 
-
-     //videoDevice.toUtf8().constData()
     g_object_set(defaultcamera, "do-timestamp", TRUE, "device", "/dev/video0","name",
                  videoDevice.toUtf8().constData(), NULL);
-    g_object_set(Adefault, "do-timestamp", TRUE, "provide-clock", false, "device", "plughw:Generic",
-                 "name", audioDevice.toUtf8().constData(), NULL);
-    //g_object_set(audiotestsrc, "is-live", TRUE, "wave", 2, "do-timestamp", TRUE, NULL);
+    g_object_set(Adefault, "do-timestamp", TRUE, "device", "plughw:Generic",
+                 "name", audioDevice.toUtf8().constData(), "provide-clock", false, NULL);
     blockpad = gst_element_get_static_pad(conversor1,"src");
 
-    gst_bin_add_many(GST_BIN(pipeline), this->defaultcamera, this->videoSelector, this->vselqueue, this->scale, this->conversor1,
-                     this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7, this->Sscale,
-                     this->Svideoconvert,this->x264enc,
-                     this->h264parse, queue3, this->flvmux, queue4,
-                     this->rtmp, Adefault, audiomixer, aselqueue,this->conv, this->audiosampler, this->volume, this->Ltee2,
-                     queue9, this->faac, this->aacparse, queue5,
-                     queue8, this->audiosink,
-                     queue6, this->Vscale, this->videosinkconvert, this->sink, NULL);
-
-    /*gst_bin_add_many(GST_BIN(pipeline),this->defaultcamera, this->videoSelector, vselqueue,this->scale, this->conversor1,
-                     this->videobalance, conv_before, curr, conv_after,this->Ltee1, queue7, this->x264enc,
-                     queue3, this->flvmux, queue4,
-                     this->rtmp, this->Adefault, this->audiomixer, aselqueue, this->conv, this->audiosampler, this->volume, this->Ltee2,
-                     queue9, this->faac, this->aacparse, queue5,
-                     queue8, this->audiosink,
-                     queue6, this->videosinkconvert, this->sink, NULL);*/
+    gst_bin_add_many(GST_BIN(pipeline), defaultcamera, videoSelector, queue1, this->scale, this->conversor1,
+                                                 this->videobalance, conv_before, curr, conv_after,this->Ltee1,
+                                                 queue7, this->Svideoconvert,this->x264enc,this->h264parse,
+                                                 queue3, this->flvmux, queue4,
+                                                 this->rtmp,
+                                                 Adefault,audiomixer,this->conv, this->audiosampler, this->volume, this->Ltee2,
+                                                 queue9, this->faac, this->aacparse, queue5,
+                                                 queue8, this->audiosink,
+                                                 queue6, this->videosinkconvert, this->sink, NULL);
 
     GstPad *mixer_pad = gst_element_request_pad (audiomixer, mix_template, NULL, NULL);
     GstPad *a_pad = gst_element_get_static_pad(this->Adefault, "src");
@@ -246,10 +241,11 @@ void gstvideo::configure(){
              exit(1);
      }
     ui->audioList->addItem(audioDevice);
-
-
-
-    //gst_element_link(this->audioparse, this->volume);
+    volPad = gst_element_get_static_pad (audiomixer, "sink0"); //default volume pad
+    gdouble current_volume;
+    g_object_get(G_OBJECT(volPad), "volume", &current_volume, NULL);
+    g_print("the source %s, has a volume level of: %1f\n",  "sink0", current_volume);
+    ui->slider5->setValue(int(current_volume));
 
     GstPad *in_sel = gst_element_request_pad (videoSelector, in_sel_template, NULL, NULL);//link default camera to videoSelector
     GstPad *lo_pad = gst_element_get_static_pad(this->defaultcamera, "src");
@@ -257,136 +253,128 @@ void gstvideo::configure(){
              g_critical ("object to input-selector failed.\n");
              exit(1);
      }
+    ui->videoList->addItem(videoDevice);
 
-    gst_element_link_many(this->videoSelector, this->vselqueue, this->scale, this->conversor1, this->videobalance,
+                                gst_element_link_many(videoSelector, queue1, this->scale, this->conversor1, NULL);
+
+                                gst_element_link_many(this->videobalance,
                                                       conv_before, curr, conv_after,this->Ltee1, NULL);
+                                gst_element_link_filtered(this->conversor1, this->videobalance, this->Scaps);
+                                gst_element_link(queue7,this->Svideoconvert);
+                                gst_element_link_filtered (this->Svideoconvert, this->x264enc ,this->Vcaps);
+                                gst_element_link_many(queue6, this->videosinkconvert, this->sink,NULL);
+                                gst_element_link_many(this->x264enc, this->h264parse, queue3, NULL);
+                                gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
 
-    //gst_element_link_filtered(this->conversor1, this->videobalance,this->Scaps);
-    //gst_element_link_many(this->videobalance, conv_before, curr, conv_after, this->Ltee1,NULL);//tee1 for video visualization
-                                                                      //and streaming branch
-    //::::::::::::::::::::::::::Linking video elements :::::::::::::::::::::::::::::::::::::::::::::::::::::
-    gst_element_link_many(vselqueue, this->scale, this->conversor1, this->videobalance,
-                                                      conv_before, curr, conv_after,this->Ltee1, NULL);
-    gst_element_link_many(queue6, this->Vscale, this->videosinkconvert, this->sink,NULL);
-    gst_element_link_many(queue7, this->Sscale, this->Svideoconvert, NULL);
-    gst_element_link_filtered (this->Svideoconvert, this->x264enc ,this->Scaps);
-    gst_element_link_many(this->x264enc, this->h264parse, queue3, NULL);
-    //(queue7, this->x264enc, queue3, NULL); //queue3 will be linked with flvmux by requesting
-    //gst_element_link_filtered(this->conversor1, this->videobalance,this->Scaps);
-    gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
-    //:::::::::::::::::::::::::Linking audio elements:::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    gst_element_link_many(this->audiomixer, this->aselqueue,this->conv, this->audiosampler, this->volume, this->Ltee2, NULL);
-    gst_element_link_many(queue8, this->audiosink, NULL); // audio local branch
-    gst_element_link_many(queue9, this->faac, this->aacparse, NULL);//audio streaming branch
-    gst_element_link_filtered(this->aacparse, queue5, this->enAcaps);//queue5 will be link with flvmux
+    //*********************************audio elements ************************************************************
+                                gst_element_link_many(audiomixer, this->conv, this->audiosampler, NULL);
+                                gst_element_link_filtered(audiosampler, volume, Acaps);
+                                gst_element_link(volume, Ltee2);
+                                gst_element_link_many(queue8, this->audiosink, NULL);
+                                gst_element_link_many(queue9, this->faac, this->aacparse, NULL);
+                                gst_element_link(this->aacparse, queue5);
 
-    //****** Linking requesting pads ******************************
+                                GstPadTemplate *tee_src_pad_template1, *tee_src_pad_template2;
+                                GstPad *tee1_q6_pad, *tee1_q7_pad,*tee2_q8_pad, *tee2_q9_pad;
+                                  GstPad *q6_pad, *q7_pad, *q8_pad, *q9_pad;
 
-    GstPadTemplate *tee_src_pad_template1, *tee_src_pad_template2;
-    GstPad *tee1_q6_pad, *tee1_q7_pad,*tee2_q8_pad, *tee2_q9_pad;
-      GstPad *q6_pad, *q7_pad, *q8_pad, *q9_pad;
 
-    if ( !(tee_src_pad_template1 = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (this->Ltee1), "src_%u"))) {
-     gst_object_unref (pipeline);
-     g_critical ("Unable to get pad template");
-    }
+                                if ( !(tee_src_pad_template1 = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (this->Ltee1), "src_%u"))) {
+                                 gst_object_unref (pipeline);
+                                 g_critical ("Unable to get pad template");
+                                }
 
-    if ( !(tee_src_pad_template2 = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (this->Ltee2), "src_%u"))) {
-     gst_object_unref (pipeline);
-     g_critical ("Unable to get pad template");
-    }
+                                if ( !(tee_src_pad_template2 = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (this->Ltee2), "src_%u"))) {
+                                 gst_object_unref (pipeline);
+                                 g_critical ("Unable to get pad template");
+                                }
 
-    tee1_q7_pad = gst_element_request_pad (this->Ltee1, tee_src_pad_template1, NULL, NULL);
+                                tee1_q7_pad = gst_element_request_pad (this->Ltee1, tee_src_pad_template1, NULL, NULL);
 
-     q7_pad = gst_element_get_static_pad (queue7, "sink");
-     /* Link the tee to the queue 7 */
-     if (gst_pad_link (tee1_q7_pad, q7_pad) != GST_PAD_LINK_OK ){
-      g_critical ("Tee1 for queue7 could not be linked.\n");
-      gst_object_unref (pipeline);
-      exit(1);
-     }//Tee linked with queue7 for video branch to x264enc!!!
+                                 q7_pad = gst_element_get_static_pad (queue7, "sink");
+                                 /* Link the tee to the queue 7 */
+                                 if (gst_pad_link (tee1_q7_pad, q7_pad) != GST_PAD_LINK_OK ){ // t2 ----> queue7
+                                  g_critical ("Tee1 for queue7 could not be linked.\n");
+                                  gst_object_unref (pipeline);
+                                  exit(1);
+                                 }
 
-     tee2_q9_pad = gst_element_request_pad (this->Ltee2, tee_src_pad_template2, NULL, NULL);
 
-      q9_pad = gst_element_get_static_pad (queue9, "sink");
-      /* Link the tee to the queue 7 */
-      if (gst_pad_link (tee2_q9_pad, q9_pad) != GST_PAD_LINK_OK ){
-       g_critical ("Tee2 for queue9 could not be linked.\n");
-       gst_object_unref (pipeline);
-       exit(1);
-      }//Tee linked with queue9 for video branch to aacenc!!!
+                                 tee2_q9_pad = gst_element_request_pad (this->Ltee2, tee_src_pad_template2, NULL, NULL);
+                                  q9_pad = gst_element_get_static_pad (queue9, "sink");
+                                  /* Link the tee to the queue 7 */
+                                  if (gst_pad_link (tee2_q9_pad, q9_pad) != GST_PAD_LINK_OK ){
+                                   g_critical ("Tee2 for queue9 could not be linked.\n");
+                                   gst_object_unref (pipeline);
+                                   exit(1);
+                                  }
 
-      tee1_q6_pad = gst_element_request_pad (this->Ltee1, tee_src_pad_template1, NULL, NULL);
+                                  tee1_q6_pad = gst_element_request_pad (this->Ltee1, tee_src_pad_template1, NULL, NULL);
+                                  q6_pad = gst_element_get_static_pad(queue6, "sink");
+                                  /* Link the tee to the queue 6 */
+                                  if (gst_pad_link(tee1_q6_pad, q6_pad) != GST_PAD_LINK_OK ){ //  t1 ----> queue6
+                                   g_critical ("Tee1 for queue6 could not be linked.\n");
+                                   gst_object_unref (pipeline);
+                                   exit(1);
+                                  }
 
-      q6_pad = gst_element_get_static_pad(queue6, "sink");
-      /* Link the tee to the queue 6 */
-      if (gst_pad_link(tee1_q6_pad, q6_pad) != GST_PAD_LINK_OK ){ //  t1 ----> queue6
-       g_critical ("Tee1 for queue6 could not be linked.\n");
-       gst_object_unref (pipeline);
-       exit(1);
-      } //Tee linked with queue6 for local visualization!!!
+                                  /* Obtaining request pads for the tee1 elements*/
+                                  tee2_q8_pad = gst_element_request_pad (this->Ltee2, tee_src_pad_template2, NULL, NULL);
+                                  q8_pad = gst_element_get_static_pad (queue8, "sink");
+                                  /* Link the tee to the queue 6 */
+                                  if (gst_pad_link (tee2_q8_pad, q8_pad) != GST_PAD_LINK_OK ){
+                                   g_critical ("Tee2 for queue8 could not be linked.\n");
+                                   gst_object_unref (pipeline);
+                                   exit(1);
+                                   }
 
-      tee2_q8_pad = gst_element_request_pad (this->Ltee2, tee_src_pad_template2, NULL, NULL);
-      q8_pad = gst_element_get_static_pad (queue8, "sink");
-      /* Link the tee to the queue 6 */
-      if (gst_pad_link (tee2_q8_pad, q8_pad) != GST_PAD_LINK_OK ){
-       g_critical ("Tee2 for queue8 could not be linked.\n");
-       gst_object_unref (pipeline);
-       exit(1);
-       } //Tee linked with queue6 for local visualization!!!
+                                  GstPadTemplate *flvmux_sink_pad_template_audio;
+                                  if (!(flvmux_sink_pad_template_audio = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(this->flvmux), "audio"))) {
+                                      gst_object_unref (pipeline);
+                                      printf ("Unable to get pad template for audio for flvmux element");
+                                      exit(1);
+                                  }
 
-     /*######################### Linking queue 3 and 5 to flvmux ###########################################################*/
+                                  GstPad * audio_queue5_src_pad = gst_element_get_static_pad(queue5, "src");
+                                  GstPad * flvmux_sink_audio_pad = gst_element_request_pad(flvmux, flvmux_sink_pad_template_audio, NULL, NULL);
+                                  if (gst_pad_link (audio_queue5_src_pad, flvmux_sink_audio_pad) != GST_PAD_LINK_OK ) {
+                                      printf("unable to link audio queue with flvmixer\n");
+                                      exit(1);
+                                  }
 
-      GstPadTemplate *flvmux_sink_pad_template_audio;
-      if (!(flvmux_sink_pad_template_audio = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(this->flvmux), "audio"))) {
-          gst_object_unref (pipeline);
-          printf ("Unable to get pad template for audio for flvmux element");
-          exit(1);
-      }
+                                 GstPadTemplate *flvmux_sink_pad_template_video;
+                                     if (!(flvmux_sink_pad_template_video = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(this->flvmux), "video"))) {
+                                         gst_object_unref (pipeline);
+                                         printf ("Unable to get pad template for video for flvmux element");
+                                         exit(1);
+                                     }
 
-      GstPad * audio_queue5_src_pad = gst_element_get_static_pad(queue5, "src");
-      GstPad * flvmux_sink_audio_pad = gst_element_request_pad(flvmux, flvmux_sink_pad_template_audio, NULL, NULL);
-      if (gst_pad_link (audio_queue5_src_pad, flvmux_sink_audio_pad) != GST_PAD_LINK_OK ) {
-          printf("unable to link audio queue with flvmixer\n");
-          exit(1);
-      }
+                                     GstPad * video_queue3_src_pad = gst_element_get_static_pad(queue3, "src");
+                                     GstPad * flvmux_sink_video_pad = gst_element_request_pad(this->flvmux, flvmux_sink_pad_template_video, NULL, NULL);
+                                     if (gst_pad_link(video_queue3_src_pad, flvmux_sink_video_pad) == GST_PAD_LINK_OK ) {
+                                        // printf("link video queue with flvmixer\n");
+                                     }
 
-     GstPadTemplate *flvmux_sink_pad_template_video;
-         if (!(flvmux_sink_pad_template_video = gst_element_class_get_pad_template(GST_ELEMENT_GET_CLASS(this->flvmux), "video"))) {
-             gst_object_unref (pipeline);
-             printf ("Unable to get pad template for video for flvmux element");
-             exit(1);
-         }
-
-         GstPad * video_queue3_src_pad = gst_element_get_static_pad(queue3, "src");
-         GstPad * flvmux_sink_video_pad = gst_element_request_pad(this->flvmux, flvmux_sink_pad_template_video, NULL, NULL);
-         if (gst_pad_link(video_queue3_src_pad, flvmux_sink_video_pad) == GST_PAD_LINK_OK ) {
-             printf("link video queue with flvmixer\n");
-         }
-
-         gst_object_unref(audio_queue5_src_pad);
-         gst_object_unref(video_queue3_src_pad);
-         gst_object_unref (q6_pad);
-         gst_object_unref(q7_pad);
-         gst_object_unref (q8_pad);
-         gst_object_unref(q9_pad);
-         gst_object_unref(tee_src_pad_template1);
-         gst_object_unref(tee_src_pad_template2);
-         gst_object_unref (a_pad);
-         gst_object_unref (mixer_pad);
-}
+                                     gst_object_unref(audio_queue5_src_pad);
+                                     gst_object_unref(video_queue3_src_pad);
+                                     gst_object_unref (q6_pad);
+                                     gst_object_unref(q7_pad);
+                                     gst_object_unref (q8_pad);
+                                     gst_object_unref(q9_pad);
+                                     gst_object_unref(tee_src_pad_template1);
+                                     gst_object_unref(tee_src_pad_template2);
+                          }
 
 void gstvideo::addSource(){
     newSource *add = new newSource;
     add->exec();
     switch(add->sourcetype) {
     case 0:{
-        QString dev = "v4l2src";
         QString videoDevice="/dev/"+add->device;
         dsrc.push_back(new Datasrc(0, videoDevice));
         source = dsrc.back();
-        //g_object_set(source->src, "do-timestamp", TRUE, "device", videoDevice.toUtf8().constData(), NULL);
-        gst_bin_add(GST_BIN(this->pipeline), source->get_bin());
+        g_object_set(source->src, "do-timestamp", TRUE, "device", videoDevice.toUtf8().constData(), NULL);//???
+        gst_bin_add(GST_BIN(pipeline), source->get_bin());
         GstPad *in_sel = gst_element_request_pad (videoSelector, in_sel_template, NULL, NULL);
         GstPad *lo_pad = gst_element_get_static_pad(source->get_bin(), "videosrc");
         if (gst_pad_link (lo_pad, in_sel) != GST_PAD_LINK_OK ){
@@ -400,7 +388,7 @@ void gstvideo::addSource(){
         //  GST_DEBUG_OBJECT (pad, "clean up %" GST_PTR_FORMAT " and  %" GST_PTR_FORMAT,
         //selpad, pad);
 
-        g_print("the new element added into the pipeline is: %s\n", GST_ELEMENT_NAME(source->get_bin()));
+        g_print("New source: %s\n", source->srcname->toUtf8().constData());
 
     }
         break;
@@ -410,7 +398,7 @@ void gstvideo::addSource(){
         dsrc.push_back(new Datasrc(1, audioDevice));
         source = dsrc.back();
         //g_object_set(source->src, "do-timestamp", TRUE, "device", audioDevice.toUtf8().constData(), NULL);
-        gst_bin_add(GST_BIN(this->pipeline), source->get_bin());
+        gst_bin_add(GST_BIN(pipeline), source->get_bin());
         GstPad *mixer_pad = gst_element_request_pad (audiomixer, mix_template, NULL, NULL);
         GstPad *a_pad = gst_element_get_static_pad(source->get_bin(), "audiosrc");
         if (gst_pad_link (a_pad, mixer_pad) != GST_PAD_LINK_OK ){
@@ -419,7 +407,7 @@ void gstvideo::addSource(){
          }
         g_object_unref(mixer_pad);
         g_object_unref(a_pad);
-        gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
+        gst_element_set_state(source->databin, GST_STATE_PLAYING);
         g_print("the new element added into the pipeline is: %s\n", GST_ELEMENT_NAME(source->get_bin()));
         ui->audioList->addItem(audioDevice);
 
@@ -446,19 +434,20 @@ void gstvideo::addSource(){
                  g_critical ("link audio source to audiomixer failed.\n");
                  exit(1);
          }
-        long int position_nano;
-        gst_element_query_position(pipeline, GST_FORMAT_TIME, &position_nano);
-        g_print ("Duration: %" GST_TIME_FORMAT "\n", GST_TIME_ARGS (position_nano));
-        gst_pad_set_offset(lo_pad, position_nano);
-        gst_pad_set_offset(a_pad, position_nano);
-        gst_element_sync_state_with_parent(source->get_bin());
-        //gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
-        gst_pad_add_probe(gst_element_get_static_pad(source->src,"src"), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
-                          (GstPadProbeCallback)source->bus_eos, dsrc.back(), NULL);
-        g_print("the new element added into the pipeline is: %s\n", GST_ELEMENT_NAME(source->get_bin()));
-        GList *pads = GST_ELEMENT_PADS(audiomixer);
-        guint number = g_list_length(pads);
-        g_print("current number of audiomixer pads is: %u \n", number);
+
+        gst_element_set_state(source->databin, GST_STATE_PLAYING);
+        gint64 duration;
+        gst_element_query_duration(source->decoder, GST_FORMAT_TIME, &duration);
+        GstClock *clock = gst_element_get_clock(pipeline);
+        GstClockTime running_time = gst_clock_get_time(clock) - gst_element_get_base_time(pipeline);
+        source->offset=running_time;
+        g_print("New source: ""%s""\n", GST_ELEMENT_NAME(source->get_bin()));
+        gst_pad_add_probe(source->videosrc, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
+                        (GstPadProbeCallback)source->bus_eos, dsrc.back(), NULL);
+//        GList *pads = GST_ELEMENT_PADS(audiomixer);
+//        guint number = g_list_length(pads);
+//        g_print("current number of audiomixer pads is: %u \n", number);
+        g_timeout_add_seconds(1, GSourceFunc(source->doloop), dsrc.back());//loop the file
         ui->videoList->addItem(add->sourceName);
         ui->audioList->addItem(add->sourceName);
         g_object_unref(mixer_pad);
@@ -484,7 +473,13 @@ void gstvideo::addSource(){
         g_object_unref(mixer_pad);
         g_object_unref(a_pad);
         gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
-        g_print("the new element added into the pipeline is: %s\n", GST_ELEMENT_NAME(source->get_bin()));
+        GstClock *clock = gst_element_get_clock(pipeline);
+        GstClockTime running_time = gst_clock_get_time(clock) - gst_element_get_base_time(pipeline);
+        source->offset=running_time;
+        gst_pad_add_probe(source->audiosrc, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
+                        (GstPadProbeCallback)source->bus_eos, dsrc.back(), NULL);
+        g_print("New source:""%s""\n", source->srcname->toUtf8().constData());
+        g_timeout_add_seconds(1, GSourceFunc(source->doloop), dsrc.back());//loop the file
         ui->audioList->addItem(add->sourceName);
 
     }
@@ -505,7 +500,8 @@ void gstvideo::addSource(){
         g_object_unref(in_sel);
         g_object_unref(lo_pad);
         gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
-        g_print("the new element added into the pipeline is: %s\n", GST_ELEMENT_NAME(source->get_bin()));
+        g_timeout_add_seconds(1, GSourceFunc(source->doloop), dsrc.back());//loop the file
+        g_print("New source: %s\n", source->srcname->toUtf8().constData());
         ui->videoList->addItem(add->sourceName);
 
     }
@@ -529,6 +525,23 @@ void gstvideo::addSource(){
 
 }
 
+GstPadProbeReturn gstvideo::bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v)
+{
+    GstEvent *event_pad = gst_pad_probe_info_get_event(info);
+    GstEventType event_type = event_pad->type;
+
+    switch (event_type) {
+//    case GST_EVENT_EOS:{
+//        g_print("EOS event droped downstream\n");
+//        return GST_PAD_PROBE_DROP;
+//    }
+//        break;
+     default:
+        //g_print("downstream event type: %s\n", GST_EVENT_TYPE_NAME(event_pad));
+        return GST_PAD_PROBE_OK;
+        break;
+    }
+}
 
 void gstvideo::callback(GstBus *bus, GstMessage* msg, gstvideo* v)
 {
@@ -543,7 +556,7 @@ void gstvideo::callback(GstBus *bus, GstMessage* msg, gstvideo* v)
 
 }
 
-//sync callback function for ximagesink and qt widget
+
 GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gstvideo *v)
 {
     if (!gst_is_video_overlay_prepare_window_handle_message (message))
@@ -628,7 +641,7 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gstv
     return GST_PAD_PROBE_OK;
   gst_pad_remove_probe (pad, GST_PAD_PROBE_INFO_ID (info));
   gst_element_set_state (v->curr, GST_STATE_NULL);
-  gst_bin_remove (GST_BIN (v->pipeline), v->curr);
+  gst_bin_remove (GST_BIN (pipeline), v->curr);
 
   switch (effect){
   case 0:
@@ -703,7 +716,7 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gstv
       break;
     }
 
-  gst_bin_add (GST_BIN (v->pipeline), v->curr);
+  gst_bin_add (GST_BIN (pipeline), v->curr);
   gst_element_link_many (v->conv_before, v->curr, v->conv_after, NULL);
   gst_element_set_state (v->curr, GST_STATE_PLAYING);
   return GST_PAD_PROBE_DROP;
@@ -713,15 +726,15 @@ void gstvideo::start()
 {
     ui->bplay->hide();
     ui->bstop->setVisible(true);
-    if(GST_STATE(this->pipeline) == GST_STATE_READY){
+    if(GST_STATE(pipeline) == GST_STATE_READY){
         g_print("change pipeline from ready to playing");
-        gst_element_set_state (this->pipeline, GST_STATE_PLAYING);
+        gst_element_set_state (pipeline, GST_STATE_PLAYING);
         g_main_loop_run(loop);
     }
     else {
-        if(GST_STATE(this->pipeline) == GST_STATE_NULL){
+        if(GST_STATE(pipeline) == GST_STATE_PAUSED){
             g_print("change pipeline state from paused to playing");
-            gst_element_set_state (this->pipeline, GST_STATE_PLAYING);
+            gst_element_set_state (pipeline, GST_STATE_PLAYING);
 
         }
     }
@@ -730,12 +743,11 @@ void gstvideo::start()
 
 }
 
-void gstvideo::stop()
-{
+void gstvideo::stop(){
     ui->bplay->setVisible(true);
     ui->bstop->hide();
-    if(GST_STATE(this->pipeline) == GST_STATE_PLAYING){
-        gst_element_set_state (this->pipeline, GST_STATE_NULL);
+    if(GST_STATE(pipeline) == GST_STATE_PLAYING){
+        gst_element_set_state (pipeline, GST_STATE_PAUSED);
         qDebug()<<"the Pipeline State is changing to Paused";
     }
 
@@ -762,8 +774,7 @@ void gstvideo::saturation(int s){
 }
 
 
-void gstvideo::on_comboBox_currentIndexChanged(int index)
-{
+void gstvideo::on_comboBox_currentIndexChanged(int index){
      Q_UNUSED(index);
     effect=ui->comboBox->currentIndex();
     //gstvideo *v;
@@ -772,12 +783,11 @@ void gstvideo::on_comboBox_currentIndexChanged(int index)
 
 void gstvideo::avolume(int y){
      gdouble x = y/10.0;
-    gst_stream_volume_set_volume (GST_STREAM_VOLUME(this->volume), GST_STREAM_VOLUME_FORMAT_LINEAR, x);
+     g_object_set (G_OBJECT(volPad), "volume", x, NULL);
 }
 
 
-void gstvideo::on_pushButton_clicked()
-{
+void gstvideo::on_pushButton_clicked(){
     g_print("adding new source\n");
     gstvideo::addSource();
 }
@@ -792,14 +802,15 @@ void gstvideo::on_videoList_currentRowChanged(int currentRow){
 
 }
 
-void gstvideo::on_audioList_currentRowChanged(int currentRow)
-{
+void gstvideo::on_audioList_currentRowChanged(int currentRow){ //volume control of sources
     gchar *name1 = g_strdup_printf ("sink_%u", currentRow);
-    GstPad *pad = gst_element_get_static_pad (audiomixer, name1);
-    //g_object_set (audiomixer, "active-pad", pad, NULL);
-    g_object_set (pad, "volume", 1.5, NULL);
+    volPad = gst_element_get_static_pad (audiomixer, name1);
+    gdouble current_volume;
+    g_object_get(G_OBJECT(volPad), "volume", &current_volume, NULL);
+    g_print("the source %s, has a volume level of: %1f\n",  name1, current_volume);
+    ui->slider5->setValue(int(current_volume*10.0));
     g_free(name1);
-    g_object_unref(pad);
+    g_object_unref(volPad);
 }
 
 

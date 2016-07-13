@@ -22,27 +22,32 @@ protected:
     GstElement *aqueue;
     GstElement *aconvert;
     GstElement *vconvert;
+    GstElement *asample;
     GstCaps *acaps;
     GstCaps *vcaps;
+    QString *srcname;
+    GstPad *videosrc, *audiosrc;
+    gboolean first_segment;
+    GstClockTime offset;
 
     inline GstElement* get_bin(){return databin;}
 
     inline void datasrc_set_ghost_vpad(){
-        GstPad *pad = gst_element_get_static_pad(vqueue,"src");
-        gst_element_add_pad (databin, gst_ghost_pad_new ("videosrc", pad));
-        g_object_unref(pad);
+        videosrc = gst_element_get_static_pad(vqueue,"src");
+        gst_element_add_pad (databin, gst_ghost_pad_new ("videosrc", videosrc));
     }
 
     inline void datasrc_set_ghost_apad(){
-        GstPad *pad = gst_element_get_static_pad(aqueue,"src");
-        gst_element_add_pad (databin, gst_ghost_pad_new ("audiosrc", pad));
-        g_object_unref(pad);
+        audiosrc = gst_element_get_static_pad(aqueue,"src");
+        gst_element_add_pad (databin, gst_ghost_pad_new ("audiosrc", audiosrc));
     }
 
 
     static void pad_added(GstElement *src, GstPad *new_pad, Datasrc *v);
-    static void bus_callback(GstBus *ebus, GstMessage *msg, Datasrc *data);
+    static gboolean bus_call(GstBus *ebus, GstMessage *msg, Datasrc *data);
     static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
+    static void callb(GstObject *src, GstMessage, Datasrc *v);
+    static gboolean doloop(Datasrc *v);
 
 };
 #endif // DATASRC_H
