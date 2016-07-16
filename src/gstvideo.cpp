@@ -54,10 +54,12 @@ gstvideo::gstvideo(QWidget *parent) :
     ui->widget->setFixedWidth(input->resolutionX);
     ui->widget->setFixedHeight(input->resolutionY);
     ui->bplay->hide();
-    g_print("video Resolution: %dx%d \n", input->resolutionX, input->resolutionY);
-    g_print("audio rate is: %d; audio bitrate is: %d \n", input->arate, input->abrate);
-    g_print("video settings - framerate: %d, video bitrate: %d \n",input->framerate, input->vbrate);
-    g_print("audio channels is: %d \n", input->channels);
+    ui->videoList->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->audioList->setContextMenuPolicy(Qt::CustomContextMenu);
+    g_print("video Resolution: \t%dx%d \n", input->resolutionX, input->resolutionY);
+    g_print("audio rate is: \t%d; \t audio bitrate is: %d \n", input->arate, input->abrate);
+    g_print("video settings \tframerate: %d \tvideo bitrate: %d \n",input->framerate, input->vbrate);
+    g_print("audio channels is: \t%d \n", input->channels);
 
     //####################### Creating Elements ###################################################################
 
@@ -188,6 +190,10 @@ gstvideo::gstvideo(QWidget *parent) :
     connect(ui->slider5, SIGNAL(valueChanged(int)), this, SLOT(avolume(int)));
     connect(ui->bplay, SIGNAL(clicked()), this, SLOT (start()));
     connect(ui->bstop, SIGNAL(clicked()), this, SLOT(stop()));
+    connect(ui->videoList, SIGNAL(customContextMenuRequested(const QPoint &)), this,
+            SLOT(on_videoList_customContextMenuRequested(const QPoint &)));
+    connect(ui->audioList, SIGNAL(customContextMenuRequested(const QPoint &)), this,
+            SLOT(on_audioList_customContextMenuRequested(const QPoint &)));
 
     configure();
 
@@ -206,18 +212,15 @@ gstvideo::~gstvideo(){
     gst_object_unref(pipeline);
     delete ui;
     delete source;
-
 }
 
 void gstvideo::configure(){
-
 
     g_print("configuring the pipeline \n");
     QString videoDevice="/dev/"+input->localCamera;
     QString audioDevice = "plughw:"+input->localAudioCard;
     qDebug()<<"the sound card is " << audioDevice;
     qDebug()<<"video device is " << videoDevice;
-
     g_object_set(defaultcamera, "do-timestamp", TRUE, "device", "/dev/video0","name",
                  videoDevice.toUtf8().constData(), NULL);
     g_object_set(Adefault, "do-timestamp", TRUE, "device", "plughw:Generic",
@@ -233,30 +236,29 @@ void gstvideo::configure(){
                                                  queue9, this->faac, this->aacparse, queue5,
                                                  queue8, this->audiosink,
                                                  queue6, this->videosinkconvert, this->sink, NULL);
-
     GstPad *mixer_pad = gst_element_request_pad (audiomixer, mix_template, NULL, NULL);
     GstPad *a_pad = gst_element_get_static_pad(this->Adefault, "src");
     if (gst_pad_link (a_pad, mixer_pad) != GST_PAD_LINK_OK ){
              g_critical ("link audio source to audiomixer failed.\n");
              exit(1);
      }
+    gchar * name = gst_pad_get_name(mixer_pad);
+    this->mixerPads.push_back(name);//##################################################################
     ui->audioList->addItem(audioDevice);
     volPad = gst_element_get_static_pad (audiomixer, "sink0"); //default volume pad
     gdouble current_volume;
-    g_object_get(G_OBJECT(volPad), "volume", &current_volume, NULL);
-    g_print("the source %s, has a volume level of: %1f\n",  "sink0", current_volume);
     ui->slider5->setValue(int(current_volume));
-
     GstPad *in_sel = gst_element_request_pad (videoSelector, in_sel_template, NULL, NULL);//link default camera to videoSelector
     GstPad *lo_pad = gst_element_get_static_pad(this->defaultcamera, "src");
     if (gst_pad_link (lo_pad, in_sel) != GST_PAD_LINK_OK ){
              g_critical ("object to input-selector failed.\n");
              exit(1);
      }
+    name = gst_pad_get_name(in_sel);
+    this->selectorPads.push_back(name);//##################################################################
     ui->videoList->addItem(videoDevice);
 
                                 gst_element_link_many(videoSelector, queue1, this->scale, this->conversor1, NULL);
-
                                 gst_element_link_many(this->videobalance,
                                                       conv_before, curr, conv_after,this->Ltee1, NULL);
                                 gst_element_link_filtered(this->conversor1, this->videobalance, this->Scaps);
@@ -267,18 +269,16 @@ void gstvideo::configure(){
                                 gst_element_link_many(this->flvmux, queue4, this->rtmp, NULL);
 
     //*********************************audio elements ************************************************************
+
                                 gst_element_link_many(audiomixer, this->conv, this->audiosampler, NULL);
                                 gst_element_link_filtered(audiosampler, volume, Acaps);
                                 gst_element_link(volume, Ltee2);
                                 gst_element_link_many(queue8, this->audiosink, NULL);
                                 gst_element_link_many(queue9, this->faac, this->aacparse, NULL);
                                 gst_element_link(this->aacparse, queue5);
-
                                 GstPadTemplate *tee_src_pad_template1, *tee_src_pad_template2;
                                 GstPad *tee1_q6_pad, *tee1_q7_pad,*tee2_q8_pad, *tee2_q9_pad;
                                   GstPad *q6_pad, *q7_pad, *q8_pad, *q9_pad;
-
-
                                 if ( !(tee_src_pad_template1 = gst_element_class_get_pad_template (GST_ELEMENT_GET_CLASS (this->Ltee1), "src_%u"))) {
                                  gst_object_unref (pipeline);
                                  g_critical ("Unable to get pad template");
@@ -298,8 +298,6 @@ void gstvideo::configure(){
                                   gst_object_unref (pipeline);
                                   exit(1);
                                  }
-
-
                                  tee2_q9_pad = gst_element_request_pad (this->Ltee2, tee_src_pad_template2, NULL, NULL);
                                   q9_pad = gst_element_get_static_pad (queue9, "sink");
                                   /* Link the tee to the queue 7 */
@@ -381,13 +379,12 @@ void gstvideo::addSource(){
                  g_critical ("object to input-selector failed.\n");
                  exit(1);
          }
+        gchar *name = gst_pad_get_name(in_sel);
+        this->selectorPads.push_back(name);//@######################################33
         gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
         g_object_unref(in_sel);
         g_object_unref(lo_pad);
         ui->videoList->addItem(add->sourceName);
-        //  GST_DEBUG_OBJECT (pad, "clean up %" GST_PTR_FORMAT " and  %" GST_PTR_FORMAT,
-        //selpad, pad);
-
         g_print("New source: %s\n", source->srcname->toUtf8().constData());
 
     }
@@ -405,18 +402,21 @@ void gstvideo::addSource(){
                  g_critical ("link audio source to audiomixer failed.\n");
                  exit(1);
          }
+        gchar *name = gst_pad_get_name(mixer_pad);
+        this->mixerPads.push_back(name);//##############################################
         g_object_unref(mixer_pad);
         g_object_unref(a_pad);
         gst_element_set_state(source->databin, GST_STATE_PLAYING);
-        g_print("the new element added into the pipeline is: %s\n", GST_ELEMENT_NAME(source->get_bin()));
+        g_print("New source: %s\n", GST_ELEMENT_NAME(source->get_bin()));
         ui->audioList->addItem(audioDevice);
 
     }
         break;
     case 2:{  //file audio and video src
         bool loop = true;
-        dsrc.push_back(new Datasrc(add->sourcefilePath, add->sourceName, loop));
-        source = dsrc.back();
+
+        source = new Datasrc(add->sourcefilePath, add->sourceName, loop);
+        dsrc.push_back(source);
         g_signal_connect(source->decoder, "pad-added",
                             G_CALLBACK(source->pad_added), dsrc.back());
         gst_bin_add(GST_BIN(pipeline), source->get_bin());
@@ -427,6 +427,9 @@ void gstvideo::addSource(){
                  g_critical ("object to input-selector failed.\n");
                  exit(1);
          }
+        gchar *name = gst_pad_get_name(in_sel);
+        this->selectorPads.push_back(name);//#################################################
+
         //:::::::::::::::::::Audio ::::::::::::::::::::::::::::::::::::::::::::
         GstPad *mixer_pad = gst_element_request_pad (audiomixer, mix_template, NULL, NULL);
         GstPad *a_pad = gst_element_get_static_pad(source->get_bin(), "audiosrc");
@@ -435,19 +438,17 @@ void gstvideo::addSource(){
                  exit(1);
          }
 
+        name = gst_pad_get_name(mixer_pad);
+        this->mixerPads.push_back(name);//######################################################
+        //g_free(name);
         gst_element_set_state(source->databin, GST_STATE_PLAYING);
-        gint64 duration;
-        gst_element_query_duration(source->decoder, GST_FORMAT_TIME, &duration);
         GstClock *clock = gst_element_get_clock(pipeline);
         GstClockTime running_time = gst_clock_get_time(clock) - gst_element_get_base_time(pipeline);
         source->offset=running_time;
         g_print("New source: ""%s""\n", GST_ELEMENT_NAME(source->get_bin()));
         gst_pad_add_probe(source->videosrc, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
                         (GstPadProbeCallback)source->bus_eos, dsrc.back(), NULL);
-//        GList *pads = GST_ELEMENT_PADS(audiomixer);
-//        guint number = g_list_length(pads);
-//        g_print("current number of audiomixer pads is: %u \n", number);
-        g_timeout_add_seconds(1, GSourceFunc(source->doloop), dsrc.back());//loop the file
+        g_timeout_add_seconds(5, GSourceFunc(source->doloop), dsrc.back());//loop the fil
         ui->videoList->addItem(add->sourceName);
         ui->audioList->addItem(add->sourceName);
         g_object_unref(mixer_pad);
@@ -459,8 +460,8 @@ void gstvideo::addSource(){
         break;
     case 3:{     //file only audio src
         bool loop = true;
-        dsrc.push_back(new Datasrc(add->sourcefilePath, add->sourceName, loop));
-        source = dsrc.back();
+        source = new Datasrc(add->sourcefilePath, add->sourceName, loop);
+        dsrc.push_back(source);
         g_signal_connect(source->decoder, "pad-added",
                             G_CALLBACK(source->pad_added), dsrc.back());
         gst_bin_add(GST_BIN(pipeline), source->get_bin());
@@ -470,6 +471,9 @@ void gstvideo::addSource(){
                  g_critical ("link audio source to audiomixer failed.\n");
                  exit(1);
          }
+        gchar *name = gst_pad_get_name(mixer_pad);
+        this->mixerPads.push_back(name);//#####################################################
+        //g_free(name);
         g_object_unref(mixer_pad);
         g_object_unref(a_pad);
         gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
@@ -479,7 +483,7 @@ void gstvideo::addSource(){
         gst_pad_add_probe(source->audiosrc, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
                         (GstPadProbeCallback)source->bus_eos, dsrc.back(), NULL);
         g_print("New source:""%s""\n", source->srcname->toUtf8().constData());
-        g_timeout_add_seconds(1, GSourceFunc(source->doloop), dsrc.back());//loop the file
+        g_timeout_add_seconds(5, GSourceFunc(source->doloop), dsrc.back());//loop the file
         ui->audioList->addItem(add->sourceName);
 
     }
@@ -497,10 +501,13 @@ void gstvideo::addSource(){
                  g_critical ("object to input-selector failed.\n");
                  exit(1);
          }
+        gchar *name = gst_pad_get_name(in_sel);
+        this->selectorPads.push_back(gst_pad_get_name(name));//####################################################
+        g_free(name);
         g_object_unref(in_sel);
         g_object_unref(lo_pad);
         gst_element_set_state(source->get_bin(), GST_STATE_PLAYING);
-        g_timeout_add_seconds(1, GSourceFunc(source->doloop), dsrc.back());//loop the file
+        g_timeout_add_seconds(5, GSourceFunc(source->doloop), dsrc.back());//loop the file
         g_print("New source: %s\n", source->srcname->toUtf8().constData());
         ui->videoList->addItem(add->sourceName);
 
@@ -525,8 +532,7 @@ void gstvideo::addSource(){
 
 }
 
-GstPadProbeReturn gstvideo::bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v)
-{
+GstPadProbeReturn gstvideo::bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v){
     GstEvent *event_pad = gst_pad_probe_info_get_event(info);
     GstEventType event_type = event_pad->type;
 
@@ -543,8 +549,7 @@ GstPadProbeReturn gstvideo::bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasr
     }
 }
 
-void gstvideo::callback(GstBus *bus, GstMessage* msg, gstvideo* v)
-{
+void gstvideo::callback(GstBus *bus, GstMessage* msg, gstvideo* v){
 
     g_print("Got message type: %s, from %s\n", GST_MESSAGE_TYPE_NAME(msg), gst_object_get_name(msg->src));
     GError *err;
@@ -572,10 +577,6 @@ GstBusSyncReply gstvideo::bus_sync_handler (GstBus *bus, GstMessage *message, gs
     //obtengo el ID de la ventana creada en qt la cual asignare al ximagesink de gstreamer
     //y aseguro de sincronizar el llamado de la ventana a traves de mensajes en el bus de gstreamer
 }
-
-
-
-
 
 
 void gstvideo::update_color_channel (gchar *channel_name, gint dvalue, GstColorBalance *cb) {
@@ -615,8 +616,7 @@ GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gstvid
     gst_pad_remove_probe(blockpad, GST_PAD_PROBE_INFO_ID(info));
     /* install new probe for EOS */
     srcpad = gst_element_get_static_pad (v->curr, "src");
-    if(!pad)
-    {
+    if(!pad){
         g_print("no se pudo obtener el pad del elemento para enviar un EOS");
         exit(1);
      }
@@ -634,8 +634,7 @@ GstPadProbeReturn gstvideo::block_src(GstPad *pad, GstPadProbeInfo *info, gstvid
 }
 
 
-GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gstvideo *v)
-{
+GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gstvideo *v){
 
   if (GST_EVENT_TYPE (GST_PAD_PROBE_INFO_DATA (info)) != GST_EVENT_EOS)
     return GST_PAD_PROBE_OK;
@@ -722,6 +721,14 @@ GstPadProbeReturn gstvideo::event_eos(GstPad * pad, GstPadProbeInfo * info, gstv
   return GST_PAD_PROBE_DROP;
 }
 
+
+void gstvideo::deletesrc(Datasrc *v){
+
+
+}
+
+
+
 void gstvideo::start()
 {
     ui->bplay->hide();
@@ -783,34 +790,166 @@ void gstvideo::on_comboBox_currentIndexChanged(int index){
 
 void gstvideo::avolume(int y){
      gdouble x = y/10.0;
-     g_object_set (G_OBJECT(volPad), "volume", x, NULL);
+     GstPad *pad = gst_element_get_static_pad(audiomixer, audiopad);
+     g_object_set (G_OBJECT(pad), "volume", x, NULL);
+     g_object_unref(pad);
 }
 
 
 void gstvideo::on_pushButton_clicked(){
-    g_print("adding new source\n");
     gstvideo::addSource();
 }
 
 void gstvideo::on_videoList_currentRowChanged(int currentRow){
 
-    gchar *name1 = g_strdup_printf ("sink_%u", currentRow);
-    GstPad *pad = gst_element_get_static_pad (videoSelector, name1);
-    g_object_set (videoSelector, "active-pad", pad, NULL);
-    g_free(name1);
-    g_object_unref(pad);
-
+        gboolean active = false;
+        GValue p = G_VALUE_INIT;
+        gchar *name1;
+        GstIterator* it = gst_element_iterate_sink_pads(videoSelector);
+        while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
+                name1 = gst_pad_get_name(g_value_get_object(&p));
+                g_print("comparing video %s with  %s\n", this->selectorPads.at(currentRow), name1);
+                if(g_strcmp0(this->selectorPads.at(currentRow), name1) == 0){
+                     g_object_set (videoSelector, "active-pad", g_value_get_object(&p), NULL);
+                     active = true;
+                 }
+         }
+        gst_iterator_free(it);
+        g_value_unset(&p);
+        g_free(name1);
 }
 
 void gstvideo::on_audioList_currentRowChanged(int currentRow){ //volume control of sources
-    gchar *name1 = g_strdup_printf ("sink_%u", currentRow);
-    volPad = gst_element_get_static_pad (audiomixer, name1);
-    gdouble current_volume;
-    g_object_get(G_OBJECT(volPad), "volume", &current_volume, NULL);
-    g_print("the source %s, has a volume level of: %1f\n",  name1, current_volume);
-    ui->slider5->setValue(int(current_volume*10.0));
-    g_free(name1);
-    g_object_unref(volPad);
+
+    gboolean active = false;
+    GValue p = G_VALUE_INIT;
+    GstIterator* it = gst_element_iterate_sink_pads(audiomixer);
+    while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
+            audiopad = gst_pad_get_name(g_value_get_object(&p));
+            g_print("comparing audio %s with  %s\n", this->mixerPads.at(currentRow), audiopad);
+            if(g_strcmp0(this->mixerPads.at(currentRow), audiopad) == 0){
+                gdouble current_volume;
+                g_object_get(G_OBJECT(g_value_get_object(&p)), "volume", &current_volume, NULL);
+                ui->slider5->setValue(int(current_volume*10.0));
+                 active = true;
+             }
+     }
+    gst_iterator_free(it);
+    g_value_unset(&p);
 }
 
+
+
+void gstvideo::on_videoList_customContextMenuRequested(const QPoint &pos){
+
+    QPoint globalPos = ui->videoList->mapToGlobal(pos);
+
+    // Create menu and insert some actions
+    QMenu myMenu;
+    myMenu.addAction("effect", this, SLOT(veffectItem()));
+    myMenu.addAction("delete",  this, SLOT(vdeleteItem()));
+    myMenu.addAction("properties",  this, SLOT(vpropertyItem()));
+    myMenu.exec(globalPos);
+
+}
+
+void gstvideo::on_audioList_customContextMenuRequested(const QPoint &pos){
+
+    QPoint globalPos = ui->videoList->mapToGlobal(pos);
+
+    // Create menu and insert some actions
+    QMenu myMenu;
+    myMenu.addAction("effect", this, SLOT(aeffectItem()));
+    myMenu.addAction("delete", this, SLOT(adeleteItem()));
+    myMenu.addAction("properties", this, SLOT(apropertyItem()));
+    myMenu.exec(globalPos);
+
+}
+
+void gstvideo::vdeleteItem(){
+
+    GstPad *pad = gst_element_get_static_pad (videoSelector, "sink_0");
+    g_object_set (videoSelector, "active-pad", pad, NULL);
+    g_object_unref(pad);
+    gboolean active = false;
+
+    int item = ui->videoList->currentRow();
+    source = dsrc.at(item-1);
+    if(source->videosrc && source->audiosrc && !(item == 0)){
+
+        GstElement *srcx = gst_bin_get_by_name(GST_BIN(pipeline), source->srcname->toUtf8().constData());
+        gst_element_set_state(srcx, GST_STATE_NULL);
+
+        gchar *name2;
+        GstIterator* it = gst_element_iterate_sink_pads(videoSelector);
+        GValue p = G_VALUE_INIT;
+        while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
+                name2 = gst_pad_get_name(g_value_get_object(&p));
+                g_print("comparing video %s with  %s\n", this->selectorPads.at(item), name2);
+                if(g_strcmp0(this->selectorPads.at(item), name2) == 0){
+                     gst_pad_unlink(source->videosrc, GST_PAD(g_value_get_object(&p)));
+                     gst_element_release_request_pad(this->videoSelector, GST_PAD(g_value_get_object(&p)));
+                     //g_object_unref(g_value_get_object(&p));
+                     active = true;
+                 }
+         }
+        active = false;
+        it = gst_element_iterate_sink_pads(audiomixer);
+        while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
+                name2 = gst_pad_get_name(g_value_get_object(&p));
+                g_print("comparing audio %s with  %s\n", this->mixerPads.at(item), name2);
+                if(g_strcmp0(this->mixerPads.at(item), name2) == 0){
+                     gst_pad_unlink(source->audiosrc, GST_PAD(g_value_get_object(&p)));
+                     gst_element_release_request_pad(this->audiomixer, GST_PAD(g_value_get_object(&p)));
+                     //g_object_unref(g_value_get_object(&p));
+                     active = true;
+                 }
+         }
+
+        gst_bin_remove(GST_BIN(pipeline), srcx);
+
+        g_print("Source %s was deleted\n", source->srcname->toUtf8().constData());
+        QListWidgetItem* el = ui->videoList->takeItem(item);
+        delete el;
+        el = ui->audioList->takeItem(item);
+        delete el;
+        g_free(name2);
+        gst_iterator_free(it);
+        g_value_unset(&p);
+        gst_object_unref(source->videosrc);
+        gst_object_unref(source->audiosrc);
+        gst_object_unref(srcx);
+        dsrc.erase(dsrc.begin() + item-1);
+        selectorPads.erase(selectorPads.begin() + item);
+        mixerPads.erase(mixerPads.begin() + item);
+        delete source;
+    }
+
+}
+
+void gstvideo::veffectItem(){
+    int item = ui->videoList->currentRow();
+    g_print("item was modified D\n");
+}
+
+void gstvideo::vpropertyItem(){
+    int item = ui->videoList->currentRow();
+    Datasrc *src = dsrc.at(item-1);
+    QString name = *src->srcname;
+    GList *pads = GST_ELEMENT_PADS(audiomixer);
+    guint number = g_list_length(pads) - 1;
+    g_print("item is showed\n");
+}
+
+void gstvideo::apropertyItem(){
+
+}
+
+void gstvideo::aeffectItem(){
+
+}
+
+void gstvideo::adeleteItem(){
+
+}
 

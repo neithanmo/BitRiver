@@ -13,15 +13,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef GSTVIDEO_H
 #define GSTVIDEO_H
-
+#include <QObject>
 #include <QWidget>
+#include <QMenu>
 #include <glib.h>
 #include <gst/gst.h>
 #include <gst/video/colorbalance.h>
 #include <gst/video/videooverlay.h>
 #include <QMessageBox>
 #include <QSlider>
-#include <QObject>
 #include <math.h>
 #include <QLineEdit>
 #include <gst/audio/streamvolume.h>
@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string.h>
 #include <iostream>
 #include <vector>
+
 #include "ui_gstvideo.h"
 #include "inputbox.h"
 #include "gstvideo.h"//for moc compiling happiness
@@ -51,6 +52,7 @@ public:
     gstvideo(QWidget *parent = 0);
     ~gstvideo();
 
+
 private slots:
     void start();
     void stop();
@@ -60,13 +62,24 @@ private slots:
     void saturation(int);
     void on_comboBox_currentIndexChanged(int index);
     void avolume(int);
-
     void on_pushButton_clicked();
-
     void on_videoList_currentRowChanged(int currentRow);
-
-
     void on_audioList_currentRowChanged(int currentRow);
+    //void VideoListMenu(const QPoint &);//rigth click on videoListItem
+    //void AudioListMenu(const QPoint &);//rigth click on videoListItem
+    void on_videoList_customContextMenuRequested(const QPoint &pos);
+    void on_audioList_customContextMenuRequested(const QPoint &pos);
+
+    void vdeleteItem();
+
+    void vpropertyItem();
+
+    void veffectItem();
+    void adeleteItem();
+
+    void apropertyItem();
+
+    void aeffectItem();
 
 private:
     Ui::gstvideo *ui;
@@ -75,6 +88,10 @@ private:
     Datasrc *source;
     std::vector <Datasrc *> dsrc;  //Vector of datasrc objects - they may be local data, tcp or from a file
                                     //and will created dinamically
+    gchar *audiopad;
+    std::vector <gchar *> selectorPads;
+    std::vector <gchar *> mixerPads;
+
     //std::vector <Datasrc> dsrc;
     // ################## Video Element ##############################################################
     GstCaps *Vcaps;
@@ -113,6 +130,7 @@ private:
     GstElement *faac;
     GstElement *audioparse;
     GstElement *audiomixer;
+    GstPad *volPad;
 //####################### Encoding and others elements #############################################
     GstElement *flvmux;
     GstElement *Ltee1;
@@ -129,7 +147,6 @@ private:
     GstElement *queue9;
     GstElement *vselqueue;
     GstElement *aselqueue;
-    GstElement *pipeline;
     GstElement *curr ;
     GstElement *conv_before;
     GstElement *conv_after;
@@ -151,7 +168,8 @@ private:
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static void callback(GstBus  *bus, GstMessage *msg, gstvideo *v);
-    static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
+   static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
+   static void deletesrc(Datasrc *v);
 
     void configure();
     void addSource();
