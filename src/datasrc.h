@@ -48,6 +48,7 @@ protected:
     static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
     static void callb(GstObject *src, GstMessage, Datasrc *v);
     static gboolean doloop(Datasrc *v);
+    void deleteSrc();
 
 };
 #endif // DATASRC_H

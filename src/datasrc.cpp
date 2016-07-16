@@ -64,7 +64,6 @@ Datasrc::Datasrc(QString &location, QString &name, bool &loop){
        gst_pad_add_probe(gst_element_get_static_pad(vconvert,"sink"), GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM,
                                 (GstPadProbeCallback)bus_eos, this, NULL);
     }*/
-   // locate = location;
 }
 
 Datasrc::Datasrc(QString &host, int &port, QString &name){
@@ -91,7 +90,7 @@ Datasrc::Datasrc(QString &host, int &port, QString &name){
 }
 
 Datasrc::~Datasrc(){
-    //g_object_unref(databin);
+    g_object_unref(databin);
 }
 
 void Datasrc::pad_added(GstElement *src, GstPad *new_pad, Datasrc *v) {
@@ -121,10 +120,11 @@ GstPadProbeReturn Datasrc::bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc
     switch (event_type) {
 
     case GST_EVENT_SEGMENT_DONE:{
-        g_print("SEGMENT_DONE from ""%s"" \t --->seeking again \n", v->srcname->toUtf8().constData());
+        g_print("SEGMENT_DONE from ""%s"" \t ---> seeking again \n", v->srcname->toUtf8().constData());
         GstSeekFlags seek_flags;
-        int flags = GST_SEEK_FLAG_ACCURATE | GST_SEEK_FLAG_SEGMENT;
+        int flags = GST_SEEK_FLAG_SEGMENT;
         seek_flags = GstSeekFlags(flags);
+        //gst_debug_set_threshold_from_string ("decodebin:6", TRUE);
         gst_element_seek(v->decoder,1.0, GST_FORMAT_TIME, seek_flags,
                          GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_SET, -1);
         return GST_PAD_PROBE_DROP;
@@ -148,8 +148,9 @@ GstPadProbeReturn Datasrc::bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc
 gboolean Datasrc::doloop(Datasrc *v){
     g_print("Firts loop\n");
     GstSeekFlags seek_flags;
-    int flags = GST_SEEK_FLAG_ACCURATE | GST_SEEK_FLAG_SEGMENT;
+    int flags = GST_SEEK_FLAG_SEGMENT;
     seek_flags = GstSeekFlags(flags);
+    //gst_debug_set_threshold_from_string ("decodebin:6", TRUE);
     gst_element_seek(v->decoder, 1.0, GST_FORMAT_TIME, seek_flags,
                      GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_SET, -1);
     return false;
@@ -174,6 +175,8 @@ gboolean Datasrc::bus_call(GstBus *bus, GstMessage* msg, Datasrc *v)
                               GST_SEEK_TYPE_SET, G_GINT64_CONSTANT (0), GST_SEEK_TYPE_SET, position_nano);
      return TRUE;
 }
+
+
 
 
 
