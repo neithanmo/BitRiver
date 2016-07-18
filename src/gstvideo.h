@@ -88,11 +88,10 @@ private:
     Datasrc *source;
     std::vector <Datasrc *> dsrc;  //Vector of datasrc objects - they may be local data, tcp or from a file
                                     //and will created dinamically
-    gchar *audiopad;
-    std::vector <gchar *> selectorPads;
+    gchar *audiopad;                //current pad for volume control
+    std::vector <gchar *> selectorPads; //requested pads array for source control - adding/deleting
     std::vector <gchar *> mixerPads;
 
-    //std::vector <Datasrc> dsrc;
     // ################## Video Element ##############################################################
     GstCaps *Vcaps;
     GstCaps *enVcaps;
@@ -168,9 +167,7 @@ private:
     static GstPadProbeReturn event_eos(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static GstPadProbeReturn block_src(GstPad *pad, GstPadProbeInfo *info, gstvideo *v);
     static void callback(GstBus  *bus, GstMessage *msg, gstvideo *v);
-   static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
-   static void deletesrc(Datasrc *v);
-
+    static GstPadProbeReturn bus_eos(GstPad * pad, GstPadProbeInfo * info, Datasrc *v);
     void configure();
     void addSource();
 
