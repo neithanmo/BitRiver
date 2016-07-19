@@ -857,74 +857,72 @@ void gstvideo::on_audioList_customContextMenuRequested(const QPoint &pos){
 
 void gstvideo::vdeleteItem(){
 
-    GstPad *pad = gst_element_get_static_pad (videoSelector, "sink_0");
-    g_object_set (videoSelector, "active-pad", pad, NULL);
-    g_object_unref(pad);
-    gboolean active = false;
     int item = ui->videoList->currentRow();
     QListWidgetItem *video = ui->videoList->item(item);
     QListWidgetItem *audio;
-    g_print("DSRC SIZE IS: %u \n", dsrc.size());
+    QListWidgetItem *el;
+    GstPad *pad;
+    gboolean onlyVideo = true;
+    int offset;
+    GstElement *srcx;
 
     for(int v = 0; v < dsrc.size(); v++){
-        source = dsrc.at(v);
-        g_print("SOURCE: %s \n", source->srcname->toUtf8().constData());
-        if(g_strcmp0(source->srcname->toUtf8().constData(), video->text().toUtf8().constData()) == 0){
-            if((source->videosrc != NULL) && (source->audiosrc != NULL) && (item != 0)){
-
-                GstElement *srcx = gst_bin_get_by_name(GST_BIN(pipeline), source->srcname->toUtf8().constData());
-                gst_element_set_state(srcx, GST_STATE_NULL);
-
-                for(int i = 1; i < ui->audioList->count(); i++){//loop para encontrar el item seleccionado en videoList en audioList
-                    audio = ui->audioList->item(i);              //y asi eliminarlo
-                    if(g_strcmp0(video->text().toUtf8().constData(), audio->text().toUtf8().constData()) == 0){
-                        QListWidgetItem *el = ui->videoList->takeItem(item);
-                        delete el;
-                        el = ui->audioList->takeItem(i); //elimino el item de la lista de audio sources
-                        delete el;
-                        gchar *name2; //ahora procedemos a liberar los pads solicitados de videoSelector y audiomixer.
-                        GstIterator* it = gst_element_iterate_sink_pads(videoSelector);
-                        GValue p = G_VALUE_INIT;
-                        while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
-                            name2 = gst_pad_get_name(g_value_get_object(&p));
-                            g_print("comparing video %s with  %s\n", this->selectorPads.at(item), name2);
-                            if(g_strcmp0(this->selectorPads.at(item), name2) == 0){
-                                gst_pad_unlink(source->videosrc, GST_PAD(g_value_get_object(&p)));
-                                gst_element_release_request_pad(this->videoSelector, GST_PAD(g_value_get_object(&p)));
-                                active = true;
-                            }
-                        }
-                        active = false;
-                        it = gst_element_iterate_sink_pads(audiomixer);
-                        while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
-                            name2 = gst_pad_get_name(g_value_get_object(&p));
-                            g_print("comparing audio %s with  %s\n", this->mixerPads.at(item), name2);
-                            if(g_strcmp0(this->mixerPads.at(i), name2) == 0){
-                                gst_pad_unlink(source->audiosrc, GST_PAD(g_value_get_object(&p)));
-                                gst_element_release_request_pad(this->audiomixer, GST_PAD(g_value_get_object(&p)));
-                                //g_object_unref(g_value_get_object(&p));
-                                active = true;
-                            }
-                        }
-
-                        gst_bin_remove(GST_BIN(pipeline), srcx);
-                        g_print("Source %s was deleted\n", source->srcname->toUtf8().constData());
-                        g_free(name2);
-                        gst_iterator_free(it);
-                        g_value_unset(&p);
-                        gst_object_unref(srcx);
-                        dsrc.erase(dsrc.begin() + item-1);
-                        selectorPads.erase(selectorPads.begin() + item);
-                        mixerPads.erase(mixerPads.begin() + i);
-
-                    }
-                }//fin del for
-            }//segundo if
-
-        }//primer if
+        Datasrc *x = dsrc.at(v);
+        if(g_strcmp0(x->srcname->toUtf8().constData(), video->text().toUtf8().constData()) == 0){
+            source = dsrc.at(v);
+            srcx = gst_bin_get_by_name(GST_BIN(pipeline), source->srcname->toUtf8().constData());
+            gst_element_set_state(srcx, GST_STATE_NULL);
+            offset = v;
+        }
     }
 
+    //is the object a video and audio source?
+    for(int i = 0; i < ui->audioList->count(); i++){
+        audio = ui->audioList->item(i);
+        if(g_strcmp0(video->text().toUtf8().constData(), audio->text().toUtf8().constData()) == 0){
+            onlyVideo = false;
+            GstPad *pad = gst_element_get_static_pad (videoSelector, "sink_0");
+            g_object_set (videoSelector, "active-pad", pad, NULL);
+            g_object_unref(pad);
 
+            el = ui->videoList->takeItem(item);
+            delete el;
+            el = ui->audioList->takeItem(i);
+            delete el;
+            pad = gst_element_get_static_pad(videoSelector, selectorPads.at(item));
+            gst_pad_unlink(source->videosrc, pad);
+            gst_element_release_request_pad(this->videoSelector, pad);
+            gst_object_unref(pad);
+
+            pad = gst_element_get_static_pad(audiomixer, mixerPads.at(i));
+            gst_pad_unlink(source->audiosrc, pad);
+            gst_element_release_request_pad(this->audiomixer, pad);
+            gst_object_unref(pad);
+
+            gst_bin_remove(GST_BIN(pipeline), srcx);
+            g_print("Source %s was deleted\n", source->srcname->toUtf8().constData());
+            gst_object_unref(srcx);
+            dsrc.erase(dsrc.begin() + offset);
+            selectorPads.erase(selectorPads.begin() + item);
+            mixerPads.erase(mixerPads.begin() + i);
+
+        }
+
+    }
+
+    if(onlyVideo){
+
+        pad = gst_element_get_static_pad(videoSelector, selectorPads.at(item));
+        gst_pad_unlink(source->videosrc, pad);
+        gst_element_release_request_pad(this->videoSelector, pad);
+        gst_object_unref(pad);
+        gst_bin_remove(GST_BIN(pipeline), srcx);
+        g_print("Source %s was deleted\n", source->srcname->toUtf8().constData());
+        el = ui->videoList->takeItem(item);
+        delete el;
+        dsrc.erase(dsrc.begin() + offset);
+        selectorPads.erase(selectorPads.begin() + item);
+    }
 }
 
 void gstvideo::veffectItem(){
@@ -951,70 +949,71 @@ void gstvideo::aeffectItem(){
 
 void gstvideo::adeleteItem(){
 
-    gboolean active = false;
     int item = ui->audioList->currentRow();
     QListWidgetItem *video;
     QListWidgetItem *audio =  ui->audioList->item(item);
+    QListWidgetItem *el;
+    GstPad *pad;
+    gboolean onlyAudio = true;
+    int offset;
+    GstElement *srcx;
 
     for(int v = 0; v < dsrc.size(); v++){
-        source = dsrc.at(v);
-        if(g_strcmp0(source->srcname->toUtf8().constData(), audio->text().toUtf8().constData()) == 0){
-            if((source->videosrc != NULL) && (source->audiosrc != NULL) && (item != 0)){
-                GstPad *pad = gst_element_get_static_pad (videoSelector, "sink_0");
-                g_object_set (videoSelector, "active-pad", pad, NULL);
-                g_object_unref(pad);
-                GstElement *srcx = gst_bin_get_by_name(GST_BIN(pipeline), source->srcname->toUtf8().constData());
-                gst_element_set_state(srcx, GST_STATE_NULL);
+        Datasrc *x = dsrc.at(v);
+        if(g_strcmp0(x->srcname->toUtf8().constData(), audio->text().toUtf8().constData()) == 0){
+            source = dsrc.at(v);
+            srcx = gst_bin_get_by_name(GST_BIN(pipeline), source->srcname->toUtf8().constData());
+            gst_element_set_state(srcx, GST_STATE_NULL);
+            offset = v;
+        }
+    }
+    //is the object an audio and video source?
+    for(int i = 0; i < ui->videoList->count(); i++){
+        video = ui->videoList->item(i);
 
-                for(int i = 1; i < ui->videoList->count(); i++){
-                    video = ui->videoList->item(i);
-                    if(g_strcmp0(video->text().toUtf8().constData(), audio->text().toUtf8().constData()) == 0){
-                        QListWidgetItem* el = ui->videoList->takeItem(i);
-                        delete el;
-                        el = ui->audioList->takeItem(item);
-                        delete el;
-                        gchar *name2;
-                        GstIterator* it = gst_element_iterate_sink_pads(videoSelector);
-                        GValue p = G_VALUE_INIT;
-                        while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
-                            name2 = gst_pad_get_name(g_value_get_object(&p));
-                            g_print("comparing video %s with  %s\n", this->selectorPads.at(i), name2);
-                            if(g_strcmp0(this->selectorPads.at(i), name2) == 0){
-                                gst_pad_unlink(source->videosrc, GST_PAD(g_value_get_object(&p)));
-                                gst_element_release_request_pad(this->videoSelector, GST_PAD(g_value_get_object(&p)));
-                                active = true;
-                            }
-                        }
-                        active = false;
-                        it = gst_element_iterate_sink_pads(audiomixer);
-                        while ((gst_iterator_next(it, &p) == GST_ITERATOR_OK) && !active){
-                            name2 = gst_pad_get_name(g_value_get_object(&p));
-                            g_print("comparing audio %s with  %s\n", this->mixerPads.at(item), name2);
-                            if(g_strcmp0(this->mixerPads.at(item), name2) == 0){
-                                gst_pad_unlink(source->audiosrc, GST_PAD(g_value_get_object(&p)));
-                                gst_element_release_request_pad(this->audiomixer, GST_PAD(g_value_get_object(&p)));
-                                //g_object_unref(g_value_get_object(&p));
-                                active = true;
-                            }
-                        }
+        if(g_strcmp0(video->text().toUtf8().constData(), audio->text().toUtf8().constData()) == 0){
+            onlyAudio = false;
+            GstPad *pad = gst_element_get_static_pad (videoSelector, "sink_0");
+            g_object_set (videoSelector, "active-pad", pad, NULL);
+            g_object_unref(pad);
 
-                        gst_bin_remove(GST_BIN(pipeline), srcx);
-                        g_print("Source %s was deleted\n", source->srcname->toUtf8().constData());
-                        g_free(name2);
-                        gst_iterator_free(it);
-                        g_value_unset(&p);
-                        gst_object_unref(srcx);
-                        dsrc.erase(dsrc.begin() + item-1);
-                        selectorPads.erase(selectorPads.begin() + i);
-                        mixerPads.erase(mixerPads.begin() + item);
+            el = ui->videoList->takeItem(i);
+            delete el;
+            el = ui->audioList->takeItem(item);
+            delete el;
 
-                    }
-                }//fin segundo for
-            }//fin segundo if
-            else{
+            pad = gst_element_get_static_pad(videoSelector, selectorPads.at(i));
+            gst_pad_unlink(source->videosrc, pad);
+            gst_element_release_request_pad(this->videoSelector, pad);
+            gst_object_unref(pad);
 
-            }
-        }//primer if
-    }//primer for
+            pad = gst_element_get_static_pad(audiomixer, mixerPads.at(item));
+            gst_pad_unlink(source->audiosrc, pad);
+            gst_element_release_request_pad(this->audiomixer, pad);
+            gst_object_unref(pad);
+
+            gst_bin_remove(GST_BIN(pipeline), srcx);
+            g_print("Source %s was deleted\n", source->srcname->toUtf8().constData());
+            gst_object_unref(srcx);
+            dsrc.erase(dsrc.begin() + offset);
+            selectorPads.erase(selectorPads.begin() + i);
+            mixerPads.erase(mixerPads.begin() + item);
+
+        }
+
+    }
+
+    if(onlyAudio){
+        pad = gst_element_get_static_pad(audiomixer, mixerPads.at(item));
+        gst_pad_unlink(source->audiosrc, pad);
+        gst_element_release_request_pad(this->audiomixer, pad);
+        gst_object_unref(pad);
+        gst_bin_remove(GST_BIN(pipeline), srcx);
+        g_print("Source %s was deleted\n", source->srcname->toUtf8().constData());
+        el = ui->audioList->takeItem(item);
+        delete el;
+        dsrc.erase(dsrc.begin() + offset);
+        mixerPads.erase(mixerPads.begin() + item);
+    }
 }
 
